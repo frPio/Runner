@@ -1,0 +1,5841 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>The Runner - Prototype</title>
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: rgba(10, 14, 24, 0.9);
+      --panel-2: rgba(19, 24, 39, 0.96);
+      --line: rgba(255, 208, 75, 0.18);
+      --gold: #ffc857;
+      --cyan: #61f4ff;
+      --pink: #ff4f8a;
+      --red: #ff5a5a;
+      --green: #69ff97;
+      --text: #f5f3eb;
+      --muted: #8e9ab0;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+      --radius: 26px;
+      --phone-w: 414px;
+      --phone-h: 896px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, rgba(67, 109, 193, 0.2), transparent 40%),
+        radial-gradient(circle at bottom, rgba(255, 79, 138, 0.12), transparent 45%),
+        linear-gradient(180deg, #04050a 0%, #080d17 55%, #030409 100%);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", "Segoe UI", sans-serif;
+      padding: 12px;
+    }
+
+    .phone {
+      width: min(100%, var(--phone-w));
+      height: min(100vh - 24px, var(--phone-h));
+      border-radius: 38px;
+      overflow: hidden;
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(20, 25, 38, 0.78), rgba(5, 8, 16, 0.96)),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
+      isolation: isolate;
+    }
+
+    .phone::before,
+    .phone::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .phone::before {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(97, 244, 255, 0.06), transparent 28%),
+        radial-gradient(circle at 75% 10%, rgba(255, 79, 138, 0.07), transparent 24%),
+        radial-gradient(circle at 70% 75%, rgba(255, 200, 87, 0.06), transparent 22%);
+      z-index: -1;
+    }
+
+    .phone::after {
+      background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 100% 3px;
+      opacity: 0.2;
+      mix-blend-mode: soft-light;
+    }
+
+    .status-bar {
+      padding: 16px 18px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close-battle {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.85;
+    }
+
+    .test-battle-btn {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.9;
+    }
+
+    .screen {
+      height: calc(100% - 50px);
+      display: flex;
+      flex-direction: column;
+      padding: 0 18px 18px;
+      gap: 14px;
+    }
+
+    .bottom-nav,
+    .panel,
+    .battle-side,
+    .map-card,
+    .deck-card,
+    .reward-card,
+    .round-overlay {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .top-panel,
+    .bottom-nav,
+    .top-panel {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .stat-chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(8, 13, 22, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      min-height: 28px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .hud-mini {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #f1f4fa;
+      white-space: nowrap;
+    }
+
+    .xp-chip {
+      justify-content: flex-start;
+      gap: 8px;
+    }
+
+    .xp-bar,
+    .hp-fill,
+    .path-progress {
+      height: 6px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      margin-top: 3px;
+    }
+
+    .xp-fill,
+    .hp-fill,
+    .path-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .xp-fill {
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
+      box-shadow: 0 0 18px rgba(97, 244, 255, 0.38);
+    }
+
+    .xp-shell {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .xp-shell .xp-bar {
+      margin-top: 0;
+    }
+
+    .home-hero {
+      flex: 1;
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(97, 244, 255, 0.05), transparent 34%),
+        linear-gradient(180deg, rgba(13, 18, 30, 0.98), rgba(5, 7, 13, 0.99));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .skyline,
+    .road,
+    .car-lights,
+    .gas-sign {
+      display: none;
+    }
+
+    .skyline {
+      bottom: 34%;
+      height: 28%;
+      background:
+        linear-gradient(90deg,
+          transparent 0 5%,
+          rgba(9, 16, 32, 0.95) 5% 12%,
+          transparent 12% 14%,
+          rgba(12, 19, 38, 0.95) 14% 24%,
+          transparent 24% 28%,
+          rgba(8, 16, 34, 0.96) 28% 38%,
+          transparent 38% 41%,
+          rgba(12, 22, 45, 0.92) 41% 49%,
+          transparent 49% 53%,
+          rgba(8, 14, 28, 0.95) 53% 67%,
+          transparent 67% 69%,
+          rgba(11, 18, 35, 0.92) 69% 77%,
+          transparent 77% 81%,
+          rgba(7, 14, 25, 0.95) 81% 92%,
+          transparent 92%);
+      box-shadow: inset 0 -24px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .skyline::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255, 218, 141, 0.8) 0 1px, transparent 1.7px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+    }
+
+    .road {
+      bottom: 0;
+      height: 42%;
+      background:
+        linear-gradient(180deg, rgba(8, 13, 22, 0) 0%, rgba(7, 12, 22, 0.5) 26%, rgba(3, 4, 9, 0.96) 86%),
+        linear-gradient(90deg, transparent 0 47%, rgba(255, 208, 87, 0.8) 47% 53%, transparent 53%);
+      clip-path: polygon(28% 0, 72% 0, 100% 100%, 0 100%);
+      opacity: 0.9;
+    }
+
+    .car-lights {
+      bottom: 11%;
+      height: 110px;
+      background:
+        radial-gradient(circle at 34% 80%, rgba(255, 88, 88, 0.68), transparent 10%),
+        radial-gradient(circle at 66% 82%, rgba(97, 244, 255, 0.75), transparent 10%),
+        radial-gradient(circle at 56% 88%, rgba(255, 208, 87, 0.7), transparent 6%),
+        linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.03));
+      filter: blur(2px);
+      animation: pulse 3.8s infinite ease-in-out;
+    }
+
+    .gas-sign {
+      top: 18%;
+      right: 8%;
+      left: auto;
+      width: 84px;
+      height: 140px;
+      border-radius: 20px 20px 8px 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 79, 138, 0.6), rgba(255, 79, 138, 0.04)),
+        rgba(7, 8, 18, 0.85);
+      border: 1px solid rgba(255, 79, 138, 0.4);
+      box-shadow: 0 0 28px rgba(255, 79, 138, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffd8e6;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      text-transform: uppercase;
+    }
+
+    .home-copy {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      justify-content: center;
+      padding-bottom: 18px;
+    }
+
+    .bottom-area {
+      display: grid;
+      gap: 4px;
+    }
+
+    .test-run-picker {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 6px;
+      border-radius: 9px;
+      background: rgba(5, 8, 16, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .test-run-picker span {
+      color: #aeb9cb;
+      font-size: 0.5rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .test-run-picker select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      background: #121927;
+      color: #eef2fb;
+      padding: 3px 6px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .test-run-picker option {
+      background: #121927;
+      color: #eef2fb;
+    }
+
+    .test-run-picker button {
+      min-width: 34px;
+      padding: 4px 7px;
+      border-radius: 7px;
+      font-size: 0.56rem;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--gold), #ff8f5e);
+      color: #231604;
+      box-shadow: none;
+    }
+
+    .home-main-view {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-top: 54px;
+    }
+
+    .message-list {
+      flex: 1;
+      padding: 10px 0 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: auto;
+    }
+
+    .conversation-tile {
+      width: 100%;
+      border-radius: 20px;
+      padding: 14px;
+      background: rgba(15, 20, 31, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.075);
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      color: inherit;
+      text-align: left;
+      box-shadow: none;
+    }
+
+    .conversation-tile.archived {
+      background: rgba(11, 15, 24, 0.58);
+      border-color: rgba(255, 255, 255, 0.04);
+      opacity: 0.54;
+      filter: grayscale(0.65);
+      cursor: default;
+    }
+
+    .conversation-tile.archived:hover,
+    .conversation-tile.archived:active {
+      transform: none;
+    }
+
+    .chat-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, rgba(255, 200, 95, 0.2), rgba(255, 200, 95, 0.06));
+      border: 1px solid rgba(255, 200, 95, 0.22);
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .chat-avatar.boss-face {
+      background:
+        linear-gradient(180deg, rgba(255, 200, 95, 0.1), rgba(255, 200, 95, 0.02)),
+        url("runner_files/spades_boss_02_avatar.png") center / cover no-repeat;
+      border-color: rgba(255, 200, 95, 0.34);
+      color: transparent;
+    }
+
+    .chat-avatar.contact-face {
+      background:
+        linear-gradient(180deg, rgba(255, 200, 95, 0.08), rgba(255, 200, 95, 0.02)),
+        var(--contact-avatar) center / cover no-repeat;
+      color: transparent;
+    }
+
+    .tile-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tile-copy .eyebrow-mini {
+      color: #b9c4d8;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .tile-copy strong {
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+    }
+
+    .tile-copy span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .tile-state {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(255, 79, 138, 0.18);
+      color: #ff78ab;
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .chat-overlay {
+      position: absolute;
+      inset: 18px;
+      z-index: 5;
+      background: rgba(4, 7, 14, 0.78);
+      backdrop-filter: blur(14px);
+      display: none;
+      align-items: stretch;
+      justify-content: center;
+      border-radius: 28px;
+    }
+
+    .chat-overlay.open {
+      display: flex;
+    }
+
+    .chat-panel {
+      width: 100%;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(8, 12, 21, 0.98), rgba(6, 9, 17, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-head {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .chat-head .chat-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+    }
+
+    .chat-head strong {
+      display: block;
+      font-size: 0.92rem;
+      letter-spacing: 0.04em;
+    }
+
+    .chat-head span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      margin-top: 2px;
+    }
+
+    .chat-scroll {
+      flex: 1;
+      min-height: 0;
+      padding: 16px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background:
+        radial-gradient(circle at top, rgba(121, 231, 255, 0.04), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+    }
+
+    .bubble {
+      max-width: 84%;
+      padding: 12px 14px;
+      border-radius: 18px;
+      font-size: 0.94rem;
+      line-height: 1.4;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+      animation: chatIn 0.26s ease;
+    }
+
+    .bubble.boss {
+      align-self: flex-start;
+      background: rgba(22, 30, 46, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom-left-radius: 8px;
+    }
+
+    .bubble.player {
+      align-self: flex-end;
+      background: linear-gradient(180deg, rgba(255, 200, 95, 0.96), rgba(255, 156, 88, 0.96));
+      color: #231604;
+      border-bottom-right-radius: 8px;
+    }
+
+    .tap-hint {
+      margin-top: auto;
+      padding: 12px 16px 18px;
+      text-align: center;
+      color: #ffd88a;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      animation: pulse 1.1s infinite ease-in-out;
+    }
+
+    .home-run-label {
+      position: absolute;
+      top: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      font-size: 0.74rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(185, 196, 216, 0.94);
+      text-align: center;
+    }
+
+    .new-game-link {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      font-size: 0.58rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(185, 196, 216, 0.92);
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 20, 31, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.075);
+      box-shadow: none;
+    }
+
+    .new-game-link:hover {
+      color: rgba(255, 255, 255, 1);
+      border-color: rgba(255, 208, 87, 0.42);
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .title {
+      font-size: 2rem;
+      line-height: 0.92;
+      max-width: 210px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      color: #d3dae7;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      max-width: 240px;
+      margin-bottom: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 18px;
+      padding: 14px 18px;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    button:hover,
+    button:active {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--gold), #ff8f5e);
+      color: #231604;
+      box-shadow: 0 12px 26px rgba(255, 143, 94, 0.28);
+    }
+
+    .secondary-btn {
+      background: linear-gradient(135deg, rgba(97, 244, 255, 0.92), rgba(79, 132, 255, 0.85));
+      color: #04101d;
+      box-shadow: 0 12px 26px rgba(79, 132, 255, 0.24);
+    }
+
+    .ghost-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ghost-btn.jackpot {
+      background: linear-gradient(180deg, rgba(255, 214, 102, 0.96), rgba(255, 167, 79, 0.92));
+      color: #261507;
+      border-color: rgba(255, 220, 128, 0.42);
+      box-shadow: 0 12px 28px rgba(255, 186, 91, 0.28);
+    }
+
+    .bottom-nav {
+      border-radius: 24px;
+      padding: 10px 8px 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      min-height: 80px;
+    }
+
+    .nav-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 18px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .nav-item.active {
+      background: rgba(255, 208, 87, 0.11);
+      color: var(--gold);
+    }
+
+    .nav-item.locked {
+      filter: grayscale(0.8);
+      opacity: 0.45;
+    }
+
+    .upgrade-badge {
+      position: absolute;
+      top: 7px;
+      right: 10px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ff3859, #c70f31);
+      color: #fff;
+      border: 1px solid rgba(255, 190, 198, 0.72);
+      box-shadow: 0 0 10px rgba(255, 56, 89, 0.42);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.64rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0;
+      z-index: 4;
+    }
+
+    .screen-stack {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel,
+    .reward-card {
+      border-radius: 24px;
+      padding: 16px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 8px;
+    }
+
+    .map-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(6, 9, 16, 0.72), rgba(6, 9, 16, 0.82));
+      overflow: hidden;
+      position: relative;
+      margin-left: -18px;
+      margin-right: -18px;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+
+    .map-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url("runner_files/map_bg.png") center/cover no-repeat;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .map-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 12%, rgba(255, 208, 87, 0.07), transparent 18%),
+        radial-gradient(circle at 78% 8%, rgba(97, 244, 255, 0.09), transparent 22%),
+        linear-gradient(180deg, transparent 60%, rgba(255, 79, 138, 0.06) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .map-top,
+    .battle-head,
+    .deck-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .map-svg-wrap {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      min-height: 240px;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .map-legend {
+      display: flex;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      transform: translateY(-18px);
+    }
+
+    .map-title-block {
+      width: 100%;
+      text-align: center;
+    }
+
+    .map-title-block .label {
+      font-size: 0.68rem;
+    }
+
+    .map-title-block h2 {
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+    }
+
+    .run-upgrade-row {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .run-upgrade-chip {
+      min-width: 28px;
+      min-height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px 3px;
+      background: rgba(255, 208, 87, 0.12);
+      border: 1px solid rgba(255, 208, 87, 0.24);
+      color: #ffe7b8;
+      font-size: 0.7rem;
+      font-weight: 800;
+      line-height: 1;
+      gap: 2px;
+    }
+
+    .run-upgrade-count {
+      color: rgba(255, 231, 184, 0.86);
+      font-size: 0.52rem;
+      letter-spacing: 0.04em;
+    }
+
+    .battle-layout {
+      flex: 1;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      min-height: 0;
+      position: relative;
+      margin-left: -18px;
+      margin-right: -18px;
+      padding: 10px 18px 0;
+      overflow: hidden;
+      isolation: isolate;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(7, 10, 18, 0.94), rgba(4, 7, 13, 0.97));
+      border: 1px solid rgba(255, 208, 87, 0.14);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 16px 34px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(6px);
+    }
+
+    .battle-layout::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(5, 8, 14, 0.92), rgba(4, 7, 13, 0.95)),
+        url("runner_files/map_bg.png") center/cover no-repeat;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .battle-layout > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .battle-layout > .round-reveal,
+    .battle-layout > .round-overlay,
+    .battle-layout > .battle-dialog-layer {
+      z-index: 4;
+    }
+
+    .battle-dialog-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: auto;
+    }
+
+    .battle-speech {
+      position: absolute;
+      top: 94px;
+      left: 43%;
+      right: 18px;
+      min-height: 96px;
+      padding: 16px 16px 18px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #f4dfbe, #ddbd8f);
+      border: 1px solid rgba(72, 42, 18, 0.22);
+      color: #24180d;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.36);
+      font-size: 0.92rem;
+      line-height: 1.34;
+      font-weight: 800;
+      animation: chatIn 0.22s ease;
+    }
+
+    .battle-speech::before {
+      content: "";
+      position: absolute;
+      left: -13px;
+      top: 36px;
+      width: 0;
+      height: 0;
+      border-top: 11px solid transparent;
+      border-bottom: 11px solid transparent;
+      border-right: 14px solid #e6c799;
+      filter: drop-shadow(-2px 2px 1px rgba(0, 0, 0, 0.12));
+    }
+
+    .battle-layout::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 50%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 208, 87, 0.28), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .battle-side {
+      border-radius: 0;
+      padding: 8px 6px 10px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-height: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .battle-side + .battle-side {
+      border-top: 1px solid rgba(255, 208, 87, 0.16);
+      margin-top: 10px;
+      padding-top: 12px;
+    }
+
+    .hp-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 9px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hp-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.68rem;
+      min-width: 0;
+    }
+
+    .hp-meta > span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suit-badge {
+      width: auto;
+      height: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0;
+      background: transparent;
+      font-size: 0.92rem;
+    }
+
+    .suit-red {
+      color: #e43d5d;
+    }
+
+    .hp-bar {
+      margin-top: 4px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .enemy-fill {
+      background: linear-gradient(90deg, #8f091a, #ff243b);
+      box-shadow: 0 0 18px rgba(255, 36, 59, 0.42);
+      transition: width 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .player-fill {
+      background: linear-gradient(90deg, #8a0818, #ff3045);
+      box-shadow: 0 0 18px rgba(255, 48, 69, 0.4);
+      transition: width 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .hp-row strong {
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      flex: 0 0 auto;
+    }
+
+    .battle-body {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .player-body {
+      grid-template-columns: 1.15fr 0.9fr;
+    }
+
+    .portrait {
+      border-radius: 20px;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 45%),
+        linear-gradient(180deg, rgba(7, 10, 18, 0.82), rgba(2, 5, 10, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .battle-body.enemy-body-art {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background: var(--enemy-art) center center / cover no-repeat;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .battle-body.enemy-body-art::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.14) 0 34%, rgba(0, 0, 0, 0.52) 56%, rgba(0, 0, 0, 0.62) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .battle-body.enemy-body-art > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .portrait.enemy-art,
+    .cards-area.enemy-cards-art {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.04);
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .portrait.enemy-art::before {
+      display: none;
+    }
+
+    .portrait.enemy-art .portrait-figure {
+      display: none;
+    }
+
+    .portrait::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 18px;
+      opacity: 0.28;
+    }
+
+    .portrait.enemy-heart::before { background: linear-gradient(180deg, #ff7297, transparent); }
+    .portrait.enemy-diamond::before { background: linear-gradient(180deg, #ffb35f, transparent); }
+    .portrait.enemy-spade::before { background: linear-gradient(180deg, #8d88ff, transparent); }
+    .portrait.enemy-club::before { background: linear-gradient(180deg, #62f7d5, transparent); }
+    .portrait.player::before { background: linear-gradient(180deg, #5aa0ff, transparent); }
+
+    .portrait-figure {
+      position: absolute;
+      inset: auto 14px 24px auto;
+      width: 58%;
+      height: 72%;
+      border-radius: 30px 30px 18px 18px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 235, 215, 0.9) 0 18%, transparent 19%),
+        linear-gradient(180deg, rgba(6, 9, 17, 0) 0 23%, rgba(18, 24, 38, 0.86) 24% 100%);
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.48));
+    }
+
+    .portrait-figure::before,
+    .portrait-figure::after {
+      content: "";
+      position: absolute;
+      background: rgba(255, 255, 255, 0.95);
+      filter: blur(0.2px);
+    }
+
+    .portrait-figure::before {
+      width: 30%;
+      height: 8px;
+      border-radius: 999px;
+      left: 22%;
+      top: 20%;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .portrait-figure::after {
+      width: 70%;
+      height: 38%;
+      left: 15%;
+      bottom: 0;
+      border-radius: 26px 26px 14px 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+    }
+
+    .portrait-name {
+      position: relative;
+      z-index: 1;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .portrait-copy {
+      position: relative;
+      z-index: 1;
+      font-size: 0.8rem;
+      color: #d8ddeb;
+      line-height: 1.35;
+      max-width: 120px;
+    }
+
+    .cards-area,
+    .controls-area {
+      border-radius: 20px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cards-area .tag,
+    .battle-tags {
+      display: none !important;
+    }
+
+    .total {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .total strong {
+      color: var(--text);
+      font-size: 1.06rem;
+      margin-left: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .cards-stack {
+      flex: 1;
+      min-height: 116px;
+      position: relative;
+      padding-top: 28px;
+      padding-left: 0;
+      transition: padding-top 0.28s ease;
+      isolation: isolate;
+    }
+
+    .cards-stack.summary-active {
+      padding-top: 40px;
+    }
+
+    .mini-card {
+      position: absolute;
+      left: 50%;
+      width: 84px;
+      height: 118px;
+      border-radius: 14px;
+      padding: 0;
+      background: transparent;
+      color: #10131b;
+      border: 0;
+      box-shadow: none;
+      display: block;
+      transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px));
+      z-index: calc(50 - var(--i));
+      transition: transform 0.24s ease, box-shadow 0.3s ease, filter 0.3s ease;
+      backface-visibility: hidden;
+      will-change: transform;
+      overflow: visible;
+    }
+
+    .mini-card .deck-card-shell,
+    .mini-card .deck-play-card {
+      width: 100%;
+      height: 100%;
+    }
+
+    .mini-card .deck-play-card {
+      --surface-top: 7px;
+      --surface-side: 7px;
+      --surface-bottom: 9px;
+      --surface-radius: 13px;
+      --photo-radius: 10px;
+      --photo-scale: 1.24;
+      --photo-pos-y: 16%;
+      --corner-left: 6px;
+      --corner-top: 4px;
+      --rank-size: 0.86rem;
+      --suit-size: 0.64rem;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
+    }
+
+    .mini-card .deck-play-card:not(.has-memory) .deck-card-surface {
+      inset: 4px 3px 7px 4px;
+      border-radius: 12px;
+    }
+
+    .mini-card .deck-play-card:not(.has-memory) .deck-card-photo {
+      border-radius: 12px;
+    }
+
+    .mini-card .deck-play-card.has-memory .deck-card-surface {
+      inset: 7px 7px 9px;
+      border-radius: 13px;
+    }
+
+    .mini-card .deck-play-card.has-memory .deck-card-photo {
+      border-radius: 10px;
+    }
+
+    .mini-card .deck-suit {
+      margin-top: -3px;
+    }
+
+    .mini-card.from-player {
+      animation: dealFromPlayer 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+      animation-fill-mode: both;
+    }
+
+    .mini-card.from-enemy {
+      animation: dealFromEnemy 0.68s cubic-bezier(0.2, 0.8, 0.2, 1);
+      animation-fill-mode: both;
+    }
+
+    .mini-card.round-win {
+      box-shadow:
+        0 0 0 2px rgba(255, 210, 102, 0.72),
+        0 0 22px rgba(255, 208, 87, 0.55),
+        0 14px 30px rgba(0, 0, 0, 0.32);
+      animation: winnerGlow 0.9s ease-in-out infinite alternate;
+    }
+
+    .cards-stack.summary-active .mini-card,
+    .cards-stack.summary-active .mini-card.round-win,
+    .cards-stack.summary-active .mini-card.summary-hit {
+      animation: none !important;
+    }
+
+    .mini-card.summary-hit {
+      box-shadow:
+        0 0 0 2px rgba(255, 208, 87, 0.82),
+        0 0 12px rgba(255, 208, 87, 0.22),
+        0 14px 30px rgba(0, 0, 0, 0.32);
+      filter: saturate(1.03) brightness(1.01);
+      transition: box-shadow 0.45s ease, filter 0.45s ease, opacity 0.45s ease;
+      animation: none;
+    }
+
+    .mini-card.red { color: #cb2748; }
+    .mini-card .peek {
+      position: absolute;
+      right: 7px;
+      top: 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      opacity: 0.92;
+    }
+
+    .controls-area {
+      justify-content: center;
+    }
+
+    .controls-area button {
+      width: 100%;
+    }
+
+    .summary-panel {
+      border-radius: 20px;
+      padding: 10px;
+      background: rgba(9, 12, 18, 0.82);
+      border: 1px solid rgba(255, 208, 87, 0.22);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      backdrop-filter: blur(5px);
+    }
+
+    .summary-panel.player {
+      min-height: 164px;
+    }
+
+    .battle-body.enemy-body-art .summary-panel.enemy {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      margin-top: -1px;
+      margin-bottom: -1px;
+      min-height: calc(100% + 2px);
+    }
+
+    .summary-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-head strong {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .summary-pill.player {
+      color: #ffce7b;
+      border-color: rgba(255, 206, 123, 0.35);
+    }
+
+    .summary-pill.enemy {
+      color: #ff8e8e;
+      border-color: rgba(255, 110, 110, 0.35);
+    }
+
+    .summary-pill.draw {
+      color: #d9dfee;
+    }
+
+    .summary-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-height: 74px;
+    }
+
+    .damage-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.68rem;
+      margin-bottom: 2px;
+      color: #d9dfee;
+      opacity: 0.86;
+      transition: opacity 0.35s ease, transform 0.35s ease, text-shadow 0.35s ease;
+    }
+
+    .damage-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .damage-line.active {
+      color: #fff2d3;
+      text-shadow: 0 0 10px rgba(255, 214, 140, 0.18);
+      opacity: 1;
+      transform: translateX(2px);
+    }
+
+    .damage-line .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .upgrade-stars {
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+      flex: 0 0 auto;
+      color: #ffd76a;
+      text-shadow: 0 0 10px rgba(255, 190, 84, 0.32);
+      font-size: 0.66rem;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .damage-line .value {
+      font-size: 0.76rem;
+      color: #ff6161;
+      font-weight: 900;
+    }
+
+    .damage-total {
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #ffe7e7;
+    }
+
+    .damage-total.strike .value {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      opacity: 0.7;
+    }
+
+    .damage-total.final {
+      margin-top: 4px;
+      padding-top: 0;
+      border-top: 0;
+      color: #ffd38b;
+    }
+
+    .pass-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 208, 87, 0.22);
+      background: rgba(255, 208, 87, 0.08);
+      color: #ffd38b;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .round-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .summary-actions {
+      display: flex;
+      justify-content: center;
+      padding-top: 0;
+    }
+
+    .summary-actions .primary-btn {
+      padding: 7px 14px;
+      font-size: 0.68rem;
+      border-radius: 13px;
+      min-width: 0;
+      box-shadow: 0 7px 14px rgba(255, 143, 94, 0.18);
+    }
+
+    .name-flash {
+      color: #ffe0a3;
+      text-shadow: 0 0 18px rgba(255, 208, 87, 0.38);
+    }
+
+    .damage-float {
+      position: absolute;
+      right: 0;
+      top: -14px;
+      color: #ff4c5d;
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-shadow: 0 0 16px rgba(255, 76, 93, 0.35);
+      animation: damageFloat 0.9s ease forwards;
+      pointer-events: none;
+    }
+
+    .hp-wrap {
+      position: relative;
+    }
+
+    .countup {
+      min-width: 48px;
+      text-align: right;
+      display: inline-block;
+    }
+
+    .deck-switch {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .deck-suit-tab {
+      position: relative;
+      border-radius: 18px;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #dce2ee;
+      cursor: pointer;
+    }
+
+    .deck-suit-tab.active {
+      background: rgba(255, 208, 87, 0.12);
+      border-color: rgba(255, 208, 87, 0.34);
+      box-shadow: 0 0 20px rgba(255, 208, 87, 0.12);
+    }
+
+    .deck-suit-tab .upgrade-badge {
+      top: 6px;
+      right: 8px;
+    }
+
+    .deck-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-content: start;
+      align-items: start;
+      grid-auto-rows: max-content;
+      overflow: auto;
+      padding: 4px 2px 8px;
+    }
+
+    .deck-card-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .deck-play-card {
+      --surface-top: 10px;
+      --surface-side: 10px;
+      --surface-bottom: 11px;
+      --surface-radius: 22px;
+      --photo-radius: 14px;
+      --photo-scale: 1.14;
+      --photo-pos-y: 18%;
+      --corner-left: 8px;
+      --corner-top: 6px;
+      --rank-size: 1.48rem;
+      --suit-size: 1.04rem;
+      width: 100%;
+      aspect-ratio: 0.69 / 1;
+      border-radius: 14px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.26);
+      color: #10131b;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .deck-play-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('runner_files/card_memries.png') center / 100% 100% no-repeat;
+      opacity: 0.98;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .deck-cards .deck-play-card:not(.has-memory)::after {
+      content: "";
+      position: absolute;
+      inset: 3px 4px 8px;
+      border-radius: 11px;
+      background: linear-gradient(180deg, #fffef9, #f5efe4);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .deck-card-surface {
+      position: absolute;
+      inset: var(--surface-top) var(--surface-side) var(--surface-bottom);
+      border-radius: var(--surface-radius);
+      background: transparent;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .deck-card-photo {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--photo-radius);
+      background: transparent;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .deck-card-photo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        var(--card-memory-art, linear-gradient(180deg, #fffef9, #f5efe4)) center var(--photo-pos-y) / cover no-repeat;
+      transform: scale(var(--photo-scale));
+      transform-origin: center top;
+    }
+
+    .deck-play-card:not(.has-memory) .deck-card-photo::before {
+      background: linear-gradient(180deg, #fffef9, #f5efe4);
+      transform: none;
+    }
+
+    .deck-card-content {
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      pointer-events: none;
+    }
+
+    .deck-play-card.red {
+      color: #cb2748;
+    }
+
+    .deck-card-top {
+      position: absolute;
+      left: var(--corner-left);
+      top: var(--corner-top);
+      z-index: 7;
+      width: auto;
+    }
+
+    .deck-card-face {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+    }
+
+    .deck-rank {
+      font-size: var(--rank-size);
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.38);
+    }
+
+    .deck-suit {
+      font-size: var(--suit-size);
+      line-height: 1;
+      margin-top: -1px;
+    }
+
+    .deck-cards .deck-play-card {
+      --surface-top: 8px;
+      --surface-side: 8px;
+      --surface-bottom: 9px;
+      --surface-radius: 18px;
+      --photo-radius: 12px;
+      --photo-scale: 1.24;
+      --photo-pos-y: 16%;
+      --corner-left: 5px;
+      --corner-top: 3px;
+      --rank-size: 1.08rem;
+      --suit-size: 0.82rem;
+    }
+
+    .deck-cards .deck-play-card:not(.has-memory) .deck-card-surface {
+      inset: 5px 5px 6px;
+      border-radius: 11px;
+    }
+
+    .deck-cards .deck-play-card:not(.has-memory) .deck-card-photo {
+      border-radius: 11px;
+    }
+
+    .deck-card-bottom {
+      display: none;
+    }
+
+    .card-collection-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+      font-size: 0.53rem;
+      font-weight: 800;
+      color: #5f6c83;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-meta-pill {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-meta-pill:last-child {
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .card-meta-pill strong {
+      font-size: 0.74rem;
+      color: #2d384a;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .card-progress {
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(14, 18, 28, 0.14);
+      border: 1px solid rgba(14, 18, 28, 0.06);
+      position: relative;
+    }
+
+    .card-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #59f19b, #59f19b);
+      box-shadow: 0 0 16px rgba(101, 247, 197, 0.26);
+    }
+
+    .card-progress.animated > span {
+      animation: duplicateProgressFill 0.72s cubic-bezier(0.22, 0.75, 0.22, 1) 0.42s both;
+    }
+
+    .card-progress-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: #334155;
+      font-size: 0.56rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      text-transform: none;
+      mix-blend-mode: multiply;
+      white-space: nowrap;
+    }
+
+    .deck-under-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 0 3px;
+    }
+
+    .deck-under-dmg {
+      color: rgba(215, 222, 235, 0.74);
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    .deck-under-dmg span {
+      margin-left: 6px;
+      color: rgba(255, 208, 87, 0.82);
+    }
+
+    .upgrade-arrow {
+      position: absolute;
+      right: 7px;
+      bottom: 7px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: rgba(82, 224, 132, 0.26);
+      border: 1px solid rgba(82, 224, 132, 0.72);
+      color: #52e084;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.04rem;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: 0 0 18px rgba(82, 224, 132, 0.24);
+    }
+
+    .reward-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 18px 92px;
+      background: rgba(4, 7, 14, 0.52);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.22s ease;
+    }
+
+    .reward-card {
+      position: relative;
+      width: 100%;
+      max-width: 384px;
+      margin: 0 auto;
+      z-index: 1;
+      max-height: 100%;
+      overflow: auto;
+    }
+
+    .reward-card h3 {
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    .reward-card p {
+      color: #d9dfee;
+      line-height: 1.45;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .reward-pack-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .reward-pack-card {
+      position: relative;
+      padding: 6px 2px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .reward-pack-card .deck-play-card {
+      width: 100%;
+      max-width: 152px;
+      cursor: default;
+    }
+
+    .reward-pack-card .deck-card-shell {
+      width: 100%;
+      max-width: 152px;
+      overflow: hidden;
+    }
+
+    .reward-pack-card .deck-under-meta {
+      width: 100%;
+      max-width: 92px;
+      align-self: flex-start;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .reward-pack-card .card-progress {
+      width: 100%;
+      max-width: 92px;
+      height: 12px;
+      border-width: 0;
+      background: rgba(14, 18, 28, 0.28);
+    }
+
+    .reward-flip-card {
+      width: 100%;
+      max-width: 152px;
+      aspect-ratio: 0.69 / 1;
+      perspective: 1400px;
+      cursor: pointer;
+      transform: translateZ(0);
+    }
+
+    .reward-flip-card button {
+      width: 100%;
+      height: 100%;
+      display: block;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .reward-flip-card button:hover,
+    .reward-flip-card button:active,
+    .reward-card button:hover,
+    .reward-card button:active {
+      transform: none;
+    }
+
+    .reward-flip-card.revealed button {
+      cursor: default;
+    }
+
+    .reward-flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.72s cubic-bezier(0.22, 0.7, 0.2, 1);
+      will-change: transform;
+    }
+
+    .reward-flip-card.revealed .reward-flip-inner {
+      transform: rotateY(180deg);
+    }
+
+    .reward-face,
+    .reward-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 14px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+    }
+
+    .reward-face {
+      transform: rotateY(180deg) translateZ(1px);
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .reward-back {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 218, 140, 0.16), transparent 35%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 6px, rgba(8,14,26,0.05) 6px 12px),
+        linear-gradient(180deg, #1a2440, #0f1629);
+      border: 1px solid rgba(255, 214, 126, 0.22);
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward-back.memory-back {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 214, 154, 0.16), transparent 35%),
+        repeating-linear-gradient(45deg, rgba(255, 219, 197, 0.06) 0 7px, rgba(92, 18, 32, 0.08) 7px 14px),
+        linear-gradient(180deg, #4b1220, #210911);
+      border-color: rgba(255, 191, 132, 0.26);
+    }
+
+    .reward-face .deck-play-card {
+      width: 100%;
+      max-width: none;
+      height: 100%;
+    }
+
+    .reward-back::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 214, 126, 0.42);
+    }
+
+    .reward-back.memory-back::before {
+      border-color: rgba(255, 191, 132, 0.4);
+    }
+
+    .reward-back-core {
+      width: 62%;
+      height: 62%;
+      border-radius: 16px;
+      border: 2px solid rgba(255, 214, 126, 0.38);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #ffd97d;
+      font-size: 1.45rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .reward-back.memory-back .reward-back-core {
+      color: #ffd38f;
+      border-color: rgba(255, 191, 132, 0.34);
+    }
+
+    .reward-back-core::before,
+    .reward-back-core::after {
+      content: "R";
+      position: absolute;
+      font-size: 0.88rem;
+      opacity: 0.7;
+    }
+
+    .reward-back-core::before {
+      top: 10px;
+      left: 12px;
+    }
+
+    .reward-back-core::after {
+      right: 12px;
+      bottom: 10px;
+      transform: rotate(180deg);
+    }
+
+    .reward-pack-qty {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(5, 8, 16, 0.8);
+      border: 1px solid rgba(255, 208, 87, 0.34);
+      color: #ffe3a5;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      z-index: 3;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.24s ease 0.44s, transform 0.24s ease 0.44s;
+    }
+
+    .reward-pack-card.revealed .reward-pack-qty {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reward-pack-copy {
+      display: none;
+    }
+
+    .reward-pack-copy strong {
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .reward-pack-copy span {
+      color: #a9b4ca;
+      font-size: 0.7rem;
+    }
+
+    .memory-reward-grid {
+      display: flex;
+      justify-content: center;
+      margin: 8px 0 4px;
+    }
+
+    .memory-hint {
+      margin-top: 4px;
+      color: #98a5bf;
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    .deck-detail-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      background: rgba(3, 7, 13, 0.72);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .deck-detail-panel {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 24px;
+      padding: 16px;
+      background: rgba(8, 12, 20, 0.96);
+      border: 1px solid rgba(255, 208, 87, 0.22);
+      box-shadow: 0 26px 48px rgba(0, 0, 0, 0.34);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .deck-detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .deck-detail-head h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .deck-detail-head p {
+      margin: 5px 0 0;
+      color: #96a3ba;
+      font-size: 0.76rem;
+    }
+
+    .detail-close {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f2f4f9;
+      font-weight: 900;
+    }
+
+    .deck-detail-card-wrap {
+      display: grid;
+      grid-template-columns: 1fr 152px 1fr;
+      align-items: center;
+      justify-items: center;
+      gap: 10px;
+      padding: 4px 0 2px;
+    }
+
+    .deck-detail-card-wrap .deck-card-shell {
+      width: 152px;
+      cursor: default;
+    }
+
+    .deck-detail-card-wrap .deck-play-card {
+      width: 100%;
+      cursor: default;
+    }
+
+    .deck-detail-card-wrap .deck-play-card:not(.has-memory)::after {
+      content: "";
+      position: absolute;
+      inset: 5px 6px 13px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fffef9, #f5efe4);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .photo-bonus-note {
+      justify-self: start;
+      align-self: center;
+      min-width: 68px;
+      color: #ffe1a2;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      font-size: 0.62rem;
+      font-weight: 900;
+      text-shadow: 0 0 14px rgba(255, 208, 87, 0.24);
+    }
+
+    .photo-bonus-note span {
+      display: block;
+      margin-top: 4px;
+      color: #f5f7fc;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 0.66rem;
+    }
+
+    .deck-detail-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .deck-stat {
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .deck-stat-label {
+      color: #8895aa;
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .deck-stat-value {
+      font-size: 0.96rem;
+      font-weight: 900;
+    }
+
+    .deck-detail-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .deck-detail-progress .card-collection-meta {
+      color: #cdd5e4;
+      font-size: 0.74rem;
+    }
+
+    .deck-memory-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 0;
+      margin-bottom: 2px;
+    }
+
+    .memory-link-btn {
+      min-height: 38px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 214, 126, 0.24);
+      background: rgba(255, 214, 126, 0.08);
+      color: #ffe1a2;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .memory-remove-btn {
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 98, 98, 0.32);
+      background: rgba(255, 98, 98, 0.12);
+      color: #ff8a8a;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .memory-picker {
+      border-radius: 18px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .memory-picker-title {
+      color: #d9e0ee;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .memory-picker-row {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .memory-picker-character {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .memory-picker-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--memory-avatar) center / cover no-repeat;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .memory-picker-name {
+      color: #cfd7e6;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .memory-picker-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(4, 6, 10, 0.62);
+      backdrop-filter: blur(8px);
+    }
+
+    .memory-picker-popup {
+      width: min(100%, 360px);
+      max-height: min(74vh, 620px);
+      border-radius: 24px;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(12, 16, 24, 0.98), rgba(10, 13, 20, 0.97));
+      border: 1px solid rgba(255, 214, 126, 0.18);
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.42);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .memory-picker-scroll {
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    .memory-picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .memory-picker-photos {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .memory-thumb {
+      aspect-ratio: 0.72 / 1;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 248, 228, 0.2);
+      background: rgba(7, 10, 17, 0.82);
+      padding: 0;
+    }
+
+    .memory-thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('runner_files/card_memries.png') center / 100% 100% no-repeat;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .memory-thumb-photo {
+      position: absolute;
+      inset: 5px;
+      border-radius: 10px;
+      background: var(--thumb-art) center / cover no-repeat;
+    }
+
+    .memory-thumb.selected {
+      box-shadow: 0 0 0 2px rgba(255, 208, 87, 0.48), 0 10px 18px rgba(0, 0, 0, 0.24);
+      border-color: rgba(255, 208, 87, 0.34);
+    }
+
+    .upgrade-btn {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .upgrade-btn.ready {
+      background: linear-gradient(180deg, #64ef9a, #35b86b);
+      border-color: rgba(112, 255, 165, 0.48);
+      color: #04100a;
+      box-shadow: 0 12px 28px rgba(53, 184, 107, 0.28);
+    }
+
+    .collections-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .collections-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-content: start;
+      overflow: auto;
+      padding: 2px;
+    }
+
+    .collection-card {
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(249, 245, 235, 1), rgba(234, 228, 216, 1));
+      border: 1px solid rgba(255, 248, 228, 0.84);
+      box-shadow: 0 16px 26px rgba(0, 0, 0, 0.22);
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      padding: 7px;
+      gap: 8px;
+    }
+
+    .collection-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 18px;
+      padding-top: 1px;
+    }
+
+    .collection-art {
+      aspect-ratio: 0.72 / 1;
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(12, 15, 24, 0.16)),
+        var(--collection-art) var(--collection-pos, 50% 18%) / var(--collection-size, cover) no-repeat;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .collection-art::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 22%;
+      background: linear-gradient(180deg, transparent, rgba(6, 9, 16, 0.18));
+    }
+
+    .collection-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 0 2px 1px;
+    }
+
+    .collection-name {
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #172031;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .star-row {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .star-slot {
+      width: 14px;
+      height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(22, 31, 45, 0.16);
+      font-size: 0.72rem;
+      text-shadow: none;
+    }
+
+    .star-slot.filled {
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255, 200, 87, 0.18);
+    }
+
+    .collection-meta {
+      display: none;
+    }
+
+    .album-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      background: rgba(4, 7, 14, 0.78);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .album-panel {
+      width: 100%;
+      max-width: 380px;
+      border-radius: 26px;
+      padding: 16px;
+      background: rgba(8, 12, 20, 0.96);
+      border: 1px solid rgba(255, 208, 87, 0.22);
+      box-shadow: 0 26px 48px rgba(0, 0, 0, 0.34);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .album-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .album-head h3 {
+      margin: 0;
+      font-size: 1.04rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .album-head p {
+      margin: 5px 0 0;
+      color: #96a3ba;
+      font-size: 0.76rem;
+    }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .album-slot {
+      aspect-ratio: 0.72 / 1;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 248, 228, 0.4);
+      background: linear-gradient(180deg, rgba(18, 23, 36, 0.9), rgba(7, 10, 17, 0.96));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 26px rgba(0, 0, 0, 0.2);
+    }
+
+    .album-slot.clickable {
+      cursor: pointer;
+    }
+
+    .album-photo {
+      position: absolute;
+      inset: 6px;
+      border-radius: 12px;
+      background: var(--album-art) 50% 50% / cover no-repeat;
+      transform: scale(1.02);
+      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .album-slot.locked .album-photo {
+      filter: blur(8px) saturate(0.82) brightness(0.72);
+      transform: scale(1.08);
+    }
+
+    .album-slot::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(4, 7, 13, 0.1), rgba(4, 7, 13, 0.26)),
+        url('runner_files/card_memries.png') center / 100% 100% no-repeat;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .album-slot.locked::after {
+      position: absolute;
+      z-index: 2;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 800;
+      text-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+    }
+
+    .album-slot.locked::after {
+      content: "🔒";
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255, 241, 220, 0.84);
+      font-size: 1.2rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .album-note {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .memory-zoom-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: rgba(2, 4, 9, 0.92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      cursor: pointer;
+    }
+
+    .memory-zoom-image {
+      width: min(92vw, 430px);
+      height: min(88vh, 760px);
+      border-radius: 26px;
+      background: var(--zoom-art) center / contain no-repeat;
+      box-shadow: 0 26px 54px rgba(0, 0, 0, 0.4);
+    }
+
+    .upgrade-choice {
+      position: absolute;
+      inset: 50% 12px auto;
+      transform: translateY(-50%);
+      z-index: 7;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 26px;
+      background: rgba(7, 11, 19, 0.95);
+      border: 1px solid rgba(255, 208, 87, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+
+    .upgrade-choice h3 {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .upgrade-choice p {
+      color: #d9dfee;
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .upgrade-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .upgrade-option {
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 208, 87, 0.28);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      padding: 0;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 12px 22px rgba(0, 0, 0, 0.18);
+    }
+
+    .upgrade-option:active {
+      transform: translateY(1px);
+    }
+
+    .upgrade-art {
+      min-height: 112px;
+      padding: 10px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 38%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    }
+
+    .upgrade-symbol {
+      font-size: 2.2rem;
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 0 18px rgba(255, 255, 255, 0.16);
+    }
+
+    .upgrade-copy {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .upgrade-name {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .upgrade-desc {
+      font-size: 0.62rem;
+      line-height: 1.38;
+      color: #cad4e7;
+    }
+
+    .small {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.78; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(calc(-50% + var(--i) * 20px - 10px)) translateY(calc(28px + var(--i) * -16px)); }
+      to { opacity: 1; transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px)); }
+    }
+
+    @keyframes dealFromPlayer {
+      from {
+        opacity: 0;
+        transform: translate(-130px, 170px) rotate(-14deg) scale(0.86);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px)) rotate(0) scale(1);
+      }
+    }
+
+    @keyframes dealFromEnemy {
+      from {
+        opacity: 0;
+        transform: translate(140px, -170px) rotate(14deg) scale(0.86);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px)) rotate(0) scale(1);
+      }
+    }
+
+    @keyframes damageFloat {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.84);
+      }
+      15% {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-24px) scale(1);
+      }
+    }
+
+    @keyframes winnerGlow {
+      from {
+        filter: saturate(1);
+        transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px)) scale(1);
+      }
+      to {
+        filter: saturate(1.12);
+        transform: translateX(calc(-50% + var(--i) * 20px)) translateY(calc(10px + var(--i) * -16px)) scale(1.03);
+      }
+    }
+
+    @keyframes summaryGlow {
+      from {
+        box-shadow:
+          0 0 0 1px rgba(255, 208, 87, 0.54),
+          0 0 12px rgba(255, 208, 87, 0.24),
+          0 14px 30px rgba(0, 0, 0, 0.32);
+        filter: saturate(1.02) brightness(1.01);
+      }
+      to {
+        box-shadow:
+          0 0 0 2px rgba(255, 208, 87, 0.82),
+          0 0 20px rgba(255, 208, 87, 0.42),
+          0 14px 30px rgba(0, 0, 0, 0.32);
+        filter: saturate(1.08) brightness(1.04);
+      }
+    }
+
+    @keyframes revealFade {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.94);
+      }
+      15%, 70% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-10px) scale(1.02);
+      }
+    }
+
+    @keyframes delayedSummaryIn {
+      from {
+        opacity: 0;
+        transform: translateY(-44%) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
+    }
+
+    @keyframes duplicateProgressFill {
+      from { width: var(--progress-from, 0%); }
+      to { width: var(--progress-to, 0%); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 430px) {
+      body {
+        padding: 0;
+      }
+
+      .phone {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+      }
+
+      .reward-card {
+        max-width: none;
+      }
+
+      .reward-overlay {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="status-bar">
+      <span>Runner OS</span>
+      <div class="status-right">
+        <span id="clock">23:47</span>
+        <button class="test-battle-btn" id="healBattle" aria-label="Heal player">♡</button>
+        <button class="test-battle-btn" id="skipBattleStage" aria-label="Skip stage">→</button>
+        <button class="close-battle" id="closeBattle" style="display:none;" aria-label="Zamknij walke">X</button>
+      </div>
+    </div>
+    <div class="screen" id="app"></div>
+  </div>
+
+  <script src="asset-manifest.js"></script>
+  <script src="stage-data.js"></script>
+  <script>
+    const STORAGE_KEY = "the-runner-prototype-v1";
+    const PLAYER_BASE_HP = 28000;
+    const PLAYER_HP_PER_LEVEL = 3000;
+    const SUITS = {
+      hearts: { icon: "\u2665", name: "Kier", colorClass: "enemy-heart", accent: "#ff7297" },
+      diamonds: { icon: "\u2666", name: "Karo", colorClass: "enemy-diamond", accent: "#ffb35f" },
+      spades: { icon: "\u2660", name: "Pik", colorClass: "enemy-spade", accent: "#8d88ff" },
+      clubs: { icon: "\u2663", name: "Trefl", colorClass: "enemy-club", accent: "#62f7d5" }
+    };
+    const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    const CARD_LEVELS = {
+      1: { dmgPerPoint: 100, copiesNeeded: 4, upgradeCost: 140 },
+      2: { dmgPerPoint: 114, copiesNeeded: 7, upgradeCost: 260 },
+      3: { dmgPerPoint: 132, copiesNeeded: null, upgradeCost: null }
+    };
+    const MEMORY_PHOTO_DAMAGE_BONUS = 25;
+    const MAP_LAYOUTS = {
+      1: {
+        nodes: [{ x: 48, y: 460 }, { x: 118, y: 340 }, { x: 208, y: 390 }, { x: 300, y: 230 }, { x: 360, y: 120 }],
+        route: "M48 460 C80 402, 110 352, 118 340 S165 375, 208 390 S265 300, 300 230 S340 150, 360 120",
+        road: "M42 515 L130 448 L176 508 L300 438 L404 490"
+      },
+      2: {
+        nodes: [{ x: 62, y: 474 }, { x: 146, y: 388 }, { x: 108, y: 256 }, { x: 268, y: 210 }, { x: 350, y: 96 }],
+        route: "M62 474 C88 430, 130 420, 146 388 S142 294, 108 256 S202 206, 268 210 S326 152, 350 96",
+        road: "M26 500 L116 438 L94 356 L206 286 L374 328"
+      },
+      3: {
+        nodes: [{ x: 54, y: 452 }, { x: 198, y: 432 }, { x: 132, y: 290 }, { x: 292, y: 250 }, { x: 334, y: 108 }],
+        route: "M54 452 C106 456, 168 444, 198 432 S164 326, 132 290 S236 272, 292 250 S324 170, 334 108",
+        road: "M32 504 L176 486 L146 368 L286 340 L388 402"
+      }
+    };
+    const RUN_UPGRADES = [
+      { id: "suit_hearts", title: "Rozpalone Kiery", description: "Kiery zadaj\u0105 o 18% wi\u0119cej dmg w tym runie.", symbol: "\u2665", accent: "#ff7297", type: "suit", suit: "hearts", value: 0.18 },
+      { id: "suit_diamonds", title: "Chromowane Karo", description: "Karo zadaj\u0105 o 18% wi\u0119cej dmg w tym runie.", symbol: "\u2666", accent: "#ffb35f", type: "suit", suit: "diamonds", value: 0.18 },
+      { id: "suit_spades", title: "Piki", description: "Piki zadaj\u0105 o 18% wi\u0119cej dmg w tym runie.", symbol: "\u2660", accent: "#8d88ff", type: "suit", suit: "spades", value: 0.18 },
+      { id: "suit_clubs", title: "Trefle", description: "Trefle zadaj\u0105 o 18% wi\u0119cej dmg w tym runie.", symbol: "\u2663", accent: "#62f7d5", type: "suit", suit: "clubs", value: 0.18 },
+      { id: "pair_bonus", title: "Twarda Para", description: "Pary zadaj\u0105 o 30% wi\u0119cej dmg w tym runie.", symbol: "2x", accent: "#ffd057", type: "pair", value: 0.3 },
+      { id: "trips_bonus", title: "Potr\u00f3jny Cios", description: "Tr\u00f3jki zadaj\u0105 o 45% wi\u0119cej dmg w tym runie.", symbol: "3x", accent: "#ff8c66", type: "trips", value: 0.45 },
+      { id: "blackjack_bonus", title: "Neon 21", description: "Blackjack zadaje o 25% wi\u0119cej dmg w tym runie.", symbol: "21", accent: "#61f4ff", type: "blackjack", value: 0.25 },
+      { id: "stage_cards_bonus", title: "Tempo Runu", description: "Za ka\u017cd\u0105 kart\u0119 u\u017cyt\u0105 w stage zyskujesz +4% dmg.", symbol: "+4%", accent: "#7cf5aa", type: "stageCards", value: 0.04 },
+      { id: "stage_heal_bonus", title: "Drugi Oddech", description: "Mi\u0119dzy stage'ami leczysz 15% HP zamiast 10% w tym runie.", symbol: "+15%", accent: "#82f7d4", type: "stageHeal", value: 0.15 },
+      { id: "rank_k_bonus", title: "Kr\u00f3l Nocy", description: "K zadaje o 22% wi\u0119cej dmg w tym runie.", symbol: "K", accent: "#ffcf7a", type: "rank", rank: "K", value: 0.22 },
+      { id: "rank_q_bonus", title: "Kr\u00f3lowa Neon\u00f3w", description: "Q zadaje o 22% wi\u0119cej dmg w tym runie.", symbol: "Q", accent: "#ff93c5", type: "rank", rank: "Q", value: 0.22 },
+      { id: "rank_j_bonus", title: "Walet Driftu", description: "J zadaje o 22% wi\u0119cej dmg w tym runie.", symbol: "J", accent: "#9bb8ff", type: "rank", rank: "J", value: 0.22 }
+    ];
+    const HOME_CHAT_STEPS = [
+      { speaker: "boss", text: "Jeste\u015b? Mam robot\u0119. Odpisz." },
+      { speaker: "player", text: "Jestem, co tam?" },
+      { speaker: "boss", text: "Zawieziesz mi co\u015b. Odbierzesz paczk\u0119 od mojej dziewczyny i zawieziesz na wskazany adres." },
+      { speaker: "player", text: "Szefie, mam zepsuty samoch\u00f3d." },
+      { speaker: "boss", text: "Mam to gdzie\u015b. Dzwo\u0144 po Nitro, on naprawi i w p\u00f3\u0142 godziny b\u0119dzie jak nowy. Do roboty." }
+    ];
+
+    function getHomeChatSteps() {
+      const run = window.RUNNER_STAGE_DATA?.runs?.find(item => Number(item.id) === Number(state.selectedStage));
+      const configured = run?.introDialogs
+        ?.filter(dialog => dialog?.text?.trim())
+        ?.map(dialog => ({
+          speaker: normalizeHomeSpeaker(dialog.speakerId),
+          text: dialog.text
+        }));
+      return configured?.length ? configured : HOME_CHAT_STEPS;
+    }
+
+    function normalizeHomeSpeaker(speakerId) {
+      return ["player", "kurier", "courier"].includes(String(speakerId).toLowerCase()) ? "player" : "boss";
+    }
+
+    function getRunConfig(runId) {
+      return window.RUNNER_STAGE_DATA?.runs?.find(item => Number(item.id) === Number(runId));
+    }
+
+    function getCharacterConfig(characterId) {
+      return window.RUNNER_STAGE_DATA?.characters?.find(item => item.id === characterId);
+    }
+
+    function getRunContact(runId) {
+      const run = getRunConfig(runId);
+      const firstSpeaker = run?.introDialogs?.find(dialog => dialog?.text?.trim() && normalizeHomeSpeaker(dialog.speakerId) !== "player")?.speakerId || "boss";
+      const character = getCharacterConfig(firstSpeaker) || getCharacterConfig("boss") || {};
+      const name = firstSpeaker === "nitro" ? "NITRO Car Repair" : character.name || "BOSS";
+      const avatar = character.avatar || "runner_files/spades_boss_02_avatar.png";
+      return { id: firstSpeaker, name, avatar };
+    }
+
+    function contactAvatarStyle(contact) {
+      return `style="--contact-avatar:url('${contact.avatar}')"`;
+    }
+
+    function renderArchivedRunThreads() {
+      return STAGES
+        .filter(stage => stage.id < state.selectedStage)
+        .sort((a, b) => b.id - a.id)
+        .map(stage => {
+          const contact = getRunContact(stage.id);
+          return `
+            <div class="conversation-tile archived">
+              <div class="chat-avatar contact-face" ${contactAvatarStyle(contact)}>${contact.name[0] || "?"}</div>
+              <div class="tile-copy">
+                <span class="eyebrow-mini">Stara rozmowa</span>
+                <strong>${contact.name}</strong>
+                <span>Run ${stage.id} zakończony. Archiwum wiadomości.</span>
+              </div>
+              <div class="tile-state">&#10003;</div>
+            </div>
+          `;
+        }).join("");
+    }
+
+    const STAGES = buildStagesFromEditorData(window.RUNNER_STAGE_DATA) || [
+      {
+        id: 1,
+        name: "Stage 1",
+        subtitle: "Nocna trasa / Downtown",
+        rewardSoft: 420,
+        rewardXp: 120,
+        enemies: [
+          { name: "Nitro", suit: "diamonds", hp: 6500, role: "garage", flavor: "naprawa w pol godziny", art: "runner_files/Karo_mechanic_01.png" },
+          { name: "Bump", suit: "diamonds", hp: 7100, role: "race", flavor: "kolizja na mokrym asfalcie", art: "runner_files/Karo_bump_01.png" },
+          { name: "Velvet Rox", suit: "hearts", hp: 7700, role: "flirt", flavor: "romans spod swietlnego szyldu", art: "runner_files/hearts_girl_02.png" },
+          { name: "Security Guy", suit: "clubs", hp: 8400, role: "security", flavor: "bramka pod klubem", art: "runner_files/clubs_security_01.png" },
+          { name: "spades_boss_01", suit: "spades", hp: 9400, role: "boss", flavor: "final przy moscie i neonach", art: "runner_files/spades_boss_01.png" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Stage 2",
+        subtitle: "Obwodnica / PrzedmieĹ›cia",
+        rewardSoft: 560,
+        rewardXp: 180,
+        enemies: [
+          { name: "Iga Turbo", suit: "diamonds", hp: 7600, role: "race", flavor: "nocny sprint przez estakadÄ™" },
+          { name: "Lola Hotline", suit: "hearts", hp: 8000, role: "date", flavor: "telefon po pĂłĹ‚nocy" },
+          { name: "Ekipa Ĺ»mii", suit: "spades", hp: 8600, role: "gang", flavor: "blokada na trasie" },
+          { name: "Patrol 204", suit: "clubs", hp: 9200, role: "cop", flavor: "psy i policyjne syreny" },
+          { name: "Boss: Baron Nitro", suit: "diamonds", hp: 10400, role: "boss", flavor: "poĹ›cig o Ĺ›wicie" }
+        ]
+      },
+      {
+        id: 3,
+        name: "Stage 3",
+        subtitle: "Port / Granica miasta",
+        rewardSoft: 720,
+        rewardXp: 240,
+        enemies: [
+          { name: "Marta Mirage", suit: "hearts", hp: 9000, role: "romance", flavor: "ukĹ‚ad na tyĹ‚ach klubu" },
+          { name: "Asfaltowy Lew", suit: "diamonds", hp: 9800, role: "race", flavor: "konwĂłj przez terminal" },
+          { name: "CieĹ„ Portu", suit: "clubs", hp: 10300, role: "client", flavor: "zĹ‚y klient i gliny w tle" },
+          { name: "OddziaĹ‚ Nocny", suit: "spades", hp: 10900, role: "gang", flavor: "puĹ‚apka miÄ™dzy kontenerami" },
+          { name: "Boss: Pan BĹ‚ysk", suit: "clubs", hp: 12200, role: "boss", flavor: "ostatni checkpoint" }
+        ]
+      }
+    ];
+
+    function buildStagesFromEditorData(config) {
+      if (!config?.runs?.length || !config?.characters?.length) {
+        return null;
+      }
+      return config.runs.map((run, index) => ({
+        id: Number(run.id) || index + 1,
+        name: run.name || `Run ${index + 1}`,
+        subtitle: run.subtitle || "",
+        rewardSoft: Number(run.rewardSoft) || 420 + index * 140,
+        rewardXp: Number(run.rewardXp) || 120 + index * 60,
+        introDialogs: Array.isArray(run.introDialogs) ? run.introDialogs : [],
+        memoryUnlocks: Array.isArray(run.memoryUnlocks) ? run.memoryUnlocks : [],
+        enemies: (run.stages || []).map(stage => {
+          const character = config.characters.find(item => item.id === stage.characterId) || {};
+          return {
+            name: character.name || stage.label || "Enemy",
+            suit: character.suit || "spades",
+            hp: Number(stage.hp) || 7000,
+            role: character.role || stage.characterId || "enemy",
+            flavor: character.flavor || stage.label || "",
+            art: character.art || "",
+            avatar: character.avatar || "",
+            editorStageId: stage.id,
+            preFightDialogs: Array.isArray(stage.preFightDialogs) ? stage.preFightDialogs : []
+          };
+        })
+      }));
+    }
+
+    const app = document.getElementById("app");
+    const clockEl = document.getElementById("clock");
+    const closeBattleEl = document.getElementById("closeBattle");
+    const healBattleEl = document.getElementById("healBattle");
+    const skipBattleStageEl = document.getElementById("skipBattleStage");
+    let hpAnimationFrame = null;
+    let isHpAnimating = false;
+
+    const state = loadState();
+    normalizeState();
+    tickClock();
+    setInterval(tickClock, 1000);
+    render();
+
+    function defaultDeckLevels() {
+      const levels = {};
+      for (const suit of Object.keys(SUITS)) {
+        for (const rank of RANKS) {
+          levels[cardKey(rank, suit)] = 1;
+        }
+      }
+      return levels;
+    }
+
+    function defaultDeckCopies() {
+      const copies = {};
+      for (const suit of Object.keys(SUITS)) {
+        for (const rank of RANKS) {
+          copies[cardKey(rank, suit)] = 0;
+        }
+      }
+      return copies;
+    }
+
+    function defaultRunBuffs() {
+      return {
+        suit: { hearts: 0, diamonds: 0, spades: 0, clubs: 0 },
+        rank: { K: 0, Q: 0, J: 0 },
+        pair: 0,
+        trips: 0,
+        blackjack: 0,
+        stageCards: 0,
+        stageHeal: 0
+      };
+    }
+
+    function defaultRunUpgradeCounts() {
+      return {};
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        return JSON.parse(raw);
+      }
+      return {
+        screen: "home",
+        subScreen: "main",
+        selectedStage: 1,
+        unlockedStage: 1,
+        currentNode: 0,
+        completedStages: [],
+        player: {
+          currentHp: PLAYER_BASE_HP,
+          xp: 0,
+          xpToNext: 100,
+          level: 1,
+          soft: 250,
+          gems: 8
+        },
+        hpBalanceVersion: 3,
+        runRoundCount: 0,
+        stageCardCount: 0,
+        homeChat: {
+          runId: 1,
+          unlocked: false,
+          open: false,
+          step: -1,
+          waitingForClose: false,
+          messages: []
+        },
+        runBuffs: defaultRunBuffs(),
+        runUpgradeCounts: defaultRunUpgradeCounts(),
+        upgradeChoice: null,
+        deckSuit: "hearts",
+        deckLevels: defaultDeckLevels(),
+        deckCopies: defaultDeckCopies(),
+        cardMemories: {},
+        deckFocus: null,
+        deckMemoryPickerOpen: false,
+        collections: {
+          nitro: { stars: 0, photosUnlocked: 0 }
+        },
+        memoryRewardsClaimed: {
+          nitroRun2: false
+        },
+        collectionFocus: null,
+        collectionImageFocus: null,
+        reward: null,
+        roundSummary: null,
+        roundReveal: null,
+        pendingRoundResult: null,
+        battle: null,
+        logs: ["Miasto nie Ĺ›pi. Kurier rusza na pierwszÄ… trasÄ™."]
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function normalizeState() {
+      if (typeof state.player.currentHp !== "number") {
+        state.player.currentHp = playerMaxHp();
+      }
+      if (!("hpBalanceVersion" in state) || state.hpBalanceVersion < 3) {
+        state.player.currentHp = playerMaxHp();
+        state.hpBalanceVersion = 3;
+      } else {
+        state.player.currentHp = Math.min(state.player.currentHp, playerMaxHp());
+      }
+      if (typeof state.runRoundCount !== "number" || Number.isNaN(state.runRoundCount)) {
+        state.runRoundCount = 0;
+      }
+      if (typeof state.stageCardCount !== "number" || Number.isNaN(state.stageCardCount)) {
+        state.stageCardCount = 0;
+      }
+      if (!state.homeChat) {
+        state.homeChat = { runId: state.selectedStage, unlocked: false, open: false, step: -1, waitingForClose: false, messages: [] };
+      }
+      if (typeof state.homeChat.runId !== "number" || Number.isNaN(state.homeChat.runId)) {
+        state.homeChat.runId = state.selectedStage;
+      }
+      if (!Array.isArray(state.homeChat.messages)) {
+        state.homeChat.messages = [];
+      }
+      if (typeof state.homeChat.unlocked !== "boolean") {
+        state.homeChat.unlocked = false;
+      }
+      if (typeof state.homeChat.open !== "boolean") {
+        state.homeChat.open = false;
+      }
+      if (typeof state.homeChat.step !== "number") {
+        state.homeChat.step = -1;
+      }
+      if (typeof state.homeChat.waitingForClose !== "boolean") {
+        state.homeChat.waitingForClose = false;
+      }
+      if (!state.runBuffs) {
+        state.runBuffs = defaultRunBuffs();
+      }
+      if (!state.runUpgradeCounts) {
+        state.runUpgradeCounts = defaultRunUpgradeCounts();
+      }
+      if (!state.runBuffs.suit) {
+        state.runBuffs.suit = defaultRunBuffs().suit;
+      }
+      if (!state.runBuffs.rank) {
+        state.runBuffs.rank = defaultRunBuffs().rank;
+      }
+      for (const suit of Object.keys(SUITS)) {
+        if (typeof state.runBuffs.suit[suit] !== "number") {
+          state.runBuffs.suit[suit] = 0;
+        }
+      }
+      for (const rank of ["K", "Q", "J"]) {
+        if (typeof state.runBuffs.rank[rank] !== "number") {
+          state.runBuffs.rank[rank] = 0;
+        }
+      }
+      for (const key of ["pair", "trips", "blackjack", "stageCards", "stageHeal"]) {
+        if (typeof state.runBuffs[key] !== "number") {
+          state.runBuffs[key] = 0;
+        }
+      }
+      for (const upgrade of RUN_UPGRADES) {
+        if (typeof state.runUpgradeCounts[upgrade.id] !== "number") {
+          state.runUpgradeCounts[upgrade.id] = 0;
+        }
+      }
+      if (!("upgradeChoice" in state)) {
+        state.upgradeChoice = null;
+      }
+      if (!("pendingRoundResult" in state)) {
+        state.pendingRoundResult = null;
+      }
+      if (state.reward?.cards?.length && !Array.isArray(state.reward.revealedCards)) {
+        state.reward.revealedCards = state.reward.cards.map(() => false);
+      }
+      if (!state.deckSuit || !SUITS[state.deckSuit]) {
+        state.deckSuit = "hearts";
+      }
+      if (!state.deckLevels) {
+        state.deckLevels = defaultDeckLevels();
+      }
+      if (!state.deckCopies) {
+        state.deckCopies = defaultDeckCopies();
+      }
+      if (!state.cardMemories) {
+        state.cardMemories = {};
+      }
+      if (!("deckFocus" in state)) {
+        state.deckFocus = null;
+      }
+      if (!("deckMemoryPickerOpen" in state)) {
+        state.deckMemoryPickerOpen = false;
+      }
+      if (!state.collections) {
+        state.collections = { nitro: { stars: 0, photosUnlocked: 0 } };
+      }
+      if (!state.collections.nitro) {
+        state.collections.nitro = { stars: 0, photosUnlocked: 0 };
+      }
+      if (!state.memoryRewardsClaimed) {
+        state.memoryRewardsClaimed = { nitroRun2: false };
+      }
+      if (!("nitroRun2" in state.memoryRewardsClaimed)) {
+        state.memoryRewardsClaimed.nitroRun2 = false;
+      }
+      if (state.memoryRewardsClaimed.nitroRun2) {
+        const legacyUnlock = getRunMemoryUnlocks(2)[0];
+        if (legacyUnlock) {
+          state.memoryRewardsClaimed[getMemoryRewardKey(legacyUnlock)] = true;
+        }
+        state.collections.nitro.stars = Math.min(5, Math.max(state.collections.nitro.stars || 0, 1));
+        state.collections.nitro.photosUnlocked = Math.max(state.collections.nitro.photosUnlocked || 0, 1);
+      }
+      if (!("collectionFocus" in state)) {
+        state.collectionFocus = null;
+      }
+      if (!("collectionImageFocus" in state)) {
+        state.collectionImageFocus = null;
+      }
+      for (const suit of Object.keys(SUITS)) {
+        for (const rank of RANKS) {
+          const key = cardKey(rank, suit);
+          if (typeof state.deckLevels[key] !== "number") {
+            state.deckLevels[key] = 1;
+          }
+          if (typeof state.deckCopies[key] !== "number" || Number.isNaN(state.deckCopies[key])) {
+            state.deckCopies[key] = 0;
+          }
+        }
+      }
+    }
+
+    function tickClock() {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function render() {
+      if (!isHpAnimating) {
+        saveState();
+      }
+      closeBattleEl.style.display = state.screen === "battle" ? "inline-flex" : "none";
+      healBattleEl.style.display = state.screen === "battle" ? "inline-flex" : "none";
+      skipBattleStageEl.style.display = state.screen === "battle" ? "inline-flex" : "none";
+      const battle = state.screen === "battle" ? renderBattle() : "";
+      const map = state.screen === "map" ? renderMap() : "";
+      const home = state.screen === "home" && state.subScreen === "main" ? renderHome() : "";
+      const deck = state.screen === "home" && state.subScreen === "deck" ? renderDeck() : "";
+      const collections = state.screen === "home" && state.subScreen === "collections" ? renderCollections() : "";
+      app.innerHTML = `
+        ${renderTopPanel()}
+        <div class="screen-stack">
+          ${home || deck || collections || map || battle}
+        </div>
+        ${state.reward ? renderReward() : ""}
+        ${state.upgradeChoice ? renderUpgradeChoice() : ""}
+        ${state.deckFocus ? renderDeckFocus() : ""}
+        ${state.deckFocus && state.deckMemoryPickerOpen ? renderDeckMemoryPickerPopup() : ""}
+        ${state.collectionFocus ? renderCollectionAlbum() : ""}
+        ${state.collectionImageFocus ? renderCollectionImageZoom() : ""}
+        ${renderBottomNav()}
+      `;
+      bindEvents();
+    }
+
+    function renderTopPanel() {
+      const xpPct = Math.min(100, (state.player.xp / state.player.xpToNext) * 100);
+      return `
+        <div class="top-panel">
+          <div class="stat-chip xp-chip">
+            <div class="hud-mini">LV ${state.player.level}</div>
+            <div class="xp-shell">
+              <div class="xp-bar"><span class="xp-fill" style="width:${xpPct}%"></span></div>
+            </div>
+          </div>
+          <div class="stat-chip">
+            <div class="hud-mini">$${state.player.soft}</div>
+          </div>
+          <div class="stat-chip">
+            <div class="hud-mini">\u25C6 ${state.player.gems}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBottomNav() {
+      const current = state.screen === "home" ? state.subScreen : "main";
+      const runOptions = STAGES.map(stage => `<option value="${stage.id}" ${state.selectedStage === stage.id ? "selected" : ""}>Run ${stage.id}</option>`).join("");
+      const runPicker = state.screen === "home" && state.subScreen === "main" ? `
+        <label class="test-run-picker">
+          <span>Test</span>
+          <select data-run-picker>${runOptions}</select>
+          <button type="button" data-run-go>GO</button>
+        </label>
+      ` : "";
+      return `
+        <div class="bottom-area">
+          <div class="bottom-nav">
+            ${navItem("shop", "SHOP", "\u25C8", false)}
+            ${navItem("deck", "DECK", "\uD83C\uDCA0", true, current === "deck", hasUpgradeableCards())}
+            ${navItem("main", "MAIN", "\u2302", true, current === "main")}
+            ${navItem("collections", "COLLECTIONS", "\u2699", true, current === "collections")}
+            ${navItem("friends", "FRIENDS", "\u2736", false)}
+          </div>
+          ${runPicker}
+        </div>
+      `;
+    }
+
+    function navItem(id, label, icon, unlocked, active = false, showBadge = false) {
+      return `
+        <div class="nav-item ${active ? "active" : ""} ${unlocked ? "" : "locked"}" data-nav="${unlocked ? id : ""}">
+          <div>${icon}</div>
+          <div>${label}</div>
+          ${showBadge ? `<span class="upgrade-badge">!</span>` : ""}
+        </div>
+      `;
+    }
+
+    function renderHome() {
+      const chat = state.homeChat;
+      const statusText = chat.unlocked ? "Rozmowa odczytana. Trasa odblokowana." : "Tapnij, aby odczytać instrukcje.";
+      const tileState = chat.unlocked ? "&#10003;" : "1";
+      const bubbles = chat.messages.map(item => `<div class="bubble ${item.speaker}">${item.text}</div>`).join("");
+      const contact = getRunContact(state.selectedStage);
+      const archivedThreads = renderArchivedRunThreads();
+      return `
+        <section class="home-hero">
+          <div class="new-game-link" data-action="new-game">New Game</div>
+          <div class="home-run-label">RUN ${state.selectedStage} - ${Math.min(currentStageNodeCount(), state.currentNode + 1)}</div>
+          <div class="home-main-view">
+            <div class="message-list">
+              <button class="conversation-tile" data-action="open-boss-chat">
+                <div class="chat-avatar contact-face" ${contactAvatarStyle(contact)}>${contact.name[0] || "?"}</div>
+                <div class="tile-copy">
+                  <span class="eyebrow-mini">Nowa wiadomość od:</span>
+                  <strong>${contact.name}</strong>
+                  <span>${statusText}</span>
+                </div>
+                <div class="tile-state" style="${chat.unlocked ? "background:rgba(127, 231, 191, 0.18); color:#7fe7bf;" : ""}">${tileState}</div>
+              </button>
+              ${archivedThreads}
+            </div>
+            <div class="home-copy">
+              <button class="primary-btn" data-action="play-stage" ${chat.unlocked ? "" : "disabled"}>Play</button>
+            </div>
+          </div>
+          <div class="chat-overlay ${chat.open ? "open" : ""}" id="homeChatOverlay">
+            <div class="chat-panel">
+              <div class="chat-head">
+                <div class="chat-avatar contact-face" ${contactAvatarStyle(contact)}>${contact.name[0] || "?"}</div>
+                <div>
+                  <strong>${contact.name}</strong>
+                  <span>Szyfrowany czat</span>
+                </div>
+              </div>
+              <div class="chat-scroll">${bubbles}</div>
+              <div class="tap-hint">${chat.waitingForClose ? "Tap anywhere to close" : "Tap to continue"}</div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDeck() {
+      const suitTabs = Object.entries(SUITS).map(([key, suit]) => `
+        <div class="deck-suit-tab ${state.deckSuit === key ? "active" : ""} ${isRedSuit(key) ? "suit-red" : ""}" data-action="deck-suit" data-suit="${key}">
+          ${suit.icon}
+          ${hasUpgradeableCardsInSuit(key) ? `<span class="upgrade-badge">!</span>` : ""}
+        </div>
+      `).join("");
+      const cards = RANKS.map(rank => {
+        return renderCollectionCard(rank, state.deckSuit, { clickable: true });
+      }).join("");
+      return `
+        <section class="panel" style="flex:1; display:flex; flex-direction:column; gap:12px; min-height:0;">
+          <div class="deck-switch">${suitTabs}</div>
+          <div class="deck-cards">${cards}</div>
+        </section>
+      `;
+    }
+
+    function renderCollections() {
+      const collectionIds = getAllCollectionCharacterIds();
+      return `
+        <section class="panel collections-panel">
+          <div class="meta-row">
+            <span>Collections</span>
+            <span>Poznane bohaterki i ich albumy</span>
+          </div>
+          <div class="collections-grid">
+            ${collectionIds.map(characterId => {
+              const character = getCharacterConfig(characterId) || { id: characterId, name: characterId, art: "" };
+              const collectionState = state.collections[characterId] || { stars: 0, photosUnlocked: 0 };
+              const coverArt = getCollectionCoverArt(character.id) || character.art || character.avatar || "runner_files/Karo_mechanic_01.png";
+              return `
+                <button class="collection-card" data-collection-open="${character.id}">
+                  <div class="collection-card-top">
+                    <div class="collection-name">${character.name}</div>
+                  </div>
+                  <div class="collection-art" style="--collection-art:url('${coverArt}'); ${collectionCropStyle(character.id)}"></div>
+                  <div class="collection-copy">
+                    <div class="star-row">
+                      ${Array.from({ length: 5 }, (_, index) => `<span class="star-slot ${index < collectionState.stars ? "filled" : ""}">&#9733;</span>`).join("")}
+                    </div>
+                  </div>
+                </button>
+              `;
+            }).join("")}
+            ${collectionIds.length ? "" : `
+              <div class="album-note">Brak photo memories do odblokowania.</div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    function getAllCollectionCharacterIds() {
+      return Object.entries(state.collections || {})
+        .filter(([characterId, collectionState]) => {
+          return (collectionState?.photosUnlocked || 0) > 0 && getCollectionPhotos(characterId).length > 0;
+        })
+        .map(([characterId]) => characterId);
+    }
+
+    function getCollectionCoverArt(characterId) {
+      const covers = {
+        nitro: "runner_files/memories/nitro_00.png",
+        velvet_rox: "runner_files/memories/roxy_00.png",
+        katharina_noir: "runner_files/memories/katarina_00.png"
+      };
+      return covers[characterId] || "";
+    }
+
+    function collectionCropStyle(characterId) {
+      if (getCollectionCoverArt(characterId)) {
+        return "--collection-pos:50% 50%; --collection-size:cover;";
+      }
+      if (characterId === "katharina_noir") {
+        return "--collection-pos:50% 8%; --collection-size:150% auto;";
+      }
+      return "";
+    }
+
+    function getRunMemoryUnlocks(runId) {
+      const configured = getRunConfig(runId)?.memoryUnlocks || [];
+      if (configured.length) {
+        return configured.map((unlock, index) => ({
+          runId: Number(runId),
+          index,
+          characterId: unlock.characterId,
+          photoArt: unlock.photoArt,
+          text: unlock.text || "You gained a new memory"
+        }));
+      }
+      if (Number(runId) === 2) {
+        return [{
+          runId: 2,
+          index: 0,
+          characterId: "nitro",
+          photoArt: "runner_files/memories/nitro_01.png",
+          text: "Możesz obejrzeć zdobyte wspomnienia w Collections"
+        }];
+      }
+      return [];
+    }
+
+    function getMemoryRewardKey(unlock) {
+      return `run:${unlock.runId}:memory:${unlock.characterId}:${unlock.photoArt || unlock.index}`;
+    }
+
+    function getPendingMemoryUnlock(runId) {
+      return getRunMemoryUnlocks(runId).find(unlock => {
+        if (!unlock.characterId || !unlock.photoArt) {
+          return false;
+        }
+        return !state.memoryRewardsClaimed?.[getMemoryRewardKey(unlock)];
+      }) || null;
+    }
+
+    function getConfiguredCollectionPhotos(characterId) {
+      const photos = [];
+      for (const run of window.RUNNER_STAGE_DATA?.runs || []) {
+        for (const unlock of run.memoryUnlocks || []) {
+          if (unlock.characterId === characterId && unlock.photoArt) {
+            photos.push({ art: unlock.photoArt });
+          }
+        }
+      }
+      return photos;
+    }
+
+    function uniquePhotos(photos) {
+      const seen = new Set();
+      return photos.filter(photo => {
+        if (!photo?.art || seen.has(photo.art)) {
+          return false;
+        }
+        seen.add(photo.art);
+        return true;
+      });
+    }
+
+    function getCollectionPhotos(characterId) {
+      const configured = getConfiguredCollectionPhotos(characterId);
+      const defaults = characterId === "nitro" ? [
+        { art: "runner_files/memories/nitro_01.png" },
+        { art: "runner_files/memories/nitro_02.png" },
+        { art: "runner_files/memories/nitro_03.png" },
+        { art: "runner_files/memories/nitro_04.png" }
+      ] : [];
+      return uniquePhotos([...configured, ...defaults]);
+    }
+
+    function renderMemoryPhotoCard(photo, options = {}) {
+      const unlocked = Boolean(options.unlocked);
+      const clickable = Boolean(options.clickable && unlocked);
+      const attrs = clickable ? `data-memory-open="${options.characterId}:${options.index}"` : "";
+      return `
+        <div class="album-slot ${unlocked ? "unlocked" : "locked"} ${clickable ? "clickable" : ""}" ${attrs}>
+          <div class="album-photo" style="--album-art:url('${photo.art}')"></div>
+        </div>
+      `;
+    }
+
+    function getCardMemory(key) {
+      return state.cardMemories?.[key] || null;
+    }
+
+    function getUnlockedCollectionEntries() {
+      const entries = [];
+      for (const [characterId, collectionState] of Object.entries(state.collections || {})) {
+        const photos = getCollectionPhotos(characterId);
+        const unlockedCount = Math.min(collectionState?.photosUnlocked || 0, photos.length);
+        if (!unlockedCount) {
+          continue;
+        }
+        const character = getCharacterConfig(characterId) || { name: characterId, avatar: "", art: "" };
+        entries.push({
+          characterId,
+          name: character.name,
+          avatar: character.avatar || character.art || photos[0]?.art || "",
+          photos: photos.slice(0, unlockedCount)
+        });
+      }
+      return entries;
+    }
+
+    function renderCollectionAlbum() {
+      const character = getCharacterConfig(state.collectionFocus) || {
+        id: "nitro",
+        name: "Nitro"
+      };
+      const collectionState = state.collections[state.collectionFocus] || { photosUnlocked: 0 };
+      const photos = getCollectionPhotos(state.collectionFocus);
+      return `
+        <div class="album-overlay">
+          <div class="album-panel">
+            <div class="album-head">
+              <div>
+                <h3>${character.name} Album</h3>
+                <p>Najpierw musisz zdoby&#263; zdj&#281;cia tej bohaterki.</p>
+              </div>
+              <button class="detail-close" data-action="close-collection">X</button>
+            </div>
+            <div class="album-grid">
+              ${Array.from({ length: photos.length || 4 }, (_, index) => {
+                const photo = photos[index] || { art: "runner_files/memories/nitro_01.png" };
+                return renderMemoryPhotoCard(photo, {
+                  unlocked: index < collectionState.photosUnlocked,
+                  clickable: true,
+                  characterId: state.collectionFocus,
+                  index
+                });
+              }).join("")}
+            </div>
+            <div class="album-note">Na razie album jest pusty. Gdy Nitro zacznie si&#281; bardziej ods&#322;ania&#263; w fabule i eventach, tutaj pojawi&#261; si&#281; jej zdj&#281;cia.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCollectionImageZoom() {
+      const focus = state.collectionImageFocus;
+      return `
+        <div class="memory-zoom-overlay" data-action="close-memory-view">
+          <div class="memory-zoom-image" style="--zoom-art:url('${focus.art}')"></div>
+        </div>
+      `;
+    }
+
+    function renderCollectionCard(rank, suitKey, options = {}) {
+      const key = cardKey(rank, suitKey);
+      const level = state.deckLevels[key] || 1;
+      const copies = state.deckCopies[key] || 0;
+      const suit = SUITS[suitKey];
+      const red = isRedSuit(suitKey);
+      const needed = copiesNeededForNextLevel(level);
+      const ratio = progressRatio(level, copies);
+      const progressFrom = Number.isFinite(options.progressFromRatio) ? Math.max(0, Math.min(100, options.progressFromRatio)) : ratio;
+      const progressTo = Number.isFinite(options.progressToRatio) ? Math.max(0, Math.min(100, options.progressToRatio)) : ratio;
+      const progressAnimated = Boolean(options.progressAnimated);
+      const progressWidth = progressAnimated ? progressFrom : progressTo;
+      const canUpgrade = canUpgradeCard(key);
+      const memory = "memoryOverride" in options ? options.memoryOverride : getCardMemory(key);
+      const wrapperActionAttr = options.clickable ? `data-card-focus="${key}"` : "";
+      const hideFooter = Boolean(options.hideFooter);
+      const displayDamage = cardPreviewDamage(rank, suitKey, { includeMemory: options.includeMemoryDamage !== false });
+      return `
+        <div class="deck-card-shell" ${wrapperActionAttr}>
+          <div class="deck-play-card ${red ? "red" : ""} ${memory ? "has-memory" : ""}">
+            <div class="deck-card-surface" ${memory ? `style="--card-memory-art:url('${memory.art}')"` : ""}>
+              <div class="deck-card-photo"></div>
+            </div>
+            <div class="deck-card-content">
+              <div class="deck-card-top">
+                <div class="deck-card-face">
+                  <div class="deck-rank">${rank}</div>
+                  <div class="deck-suit">${suit.icon}</div>
+                </div>
+              </div>
+            </div>
+            ${canUpgrade && options.showUpgrade !== false ? `<span class="upgrade-arrow">↑</span>` : ""}
+          </div>
+          ${hideFooter ? "" : `
+            <div class="deck-under-meta">
+              <div class="deck-under-dmg">DMG ${displayDamage} <span>LVL ${level}</span></div>
+              <div class="card-progress ${progressAnimated ? "animated" : ""}"><span style="--progress-from:${progressFrom}%; --progress-to:${progressTo}%; width:${progressWidth}%;"></span>${needed ? `<div class="card-progress-label">${copies} / ${needed}</div>` : `<div class="card-progress-label">MAX</div>`}</div>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderDeckFocus() {
+      const [rank, suitKey] = state.deckFocus.split("_");
+      const key = state.deckFocus;
+      const level = state.deckLevels[key] || 1;
+      const copies = state.deckCopies[key] || 0;
+      const needed = copiesNeededForNextLevel(level);
+      const upgradeCost = upgradeCostForLevel(level);
+      const canUpgrade = canUpgradeCard(key);
+      const canAfford = canAffordCardUpgrade(key);
+      const ready = canUpgrade && canAfford;
+      const nextLevel = CARD_LEVELS[level + 1];
+      const memory = getCardMemory(key);
+      const baseDamage = cardPreviewDamage(rank, suitKey, { includeMemory: false });
+      const totalDamage = cardPreviewDamage(rank, suitKey);
+      return `
+        <div class="deck-detail-overlay">
+          <div class="deck-detail-panel">
+            <div class="deck-detail-head">
+              <div>
+                <h3>${rank} ${SUITS[suitKey].name}</h3>
+              </div>
+              <button class="detail-close" data-action="close-deck-focus">X</button>
+            </div>
+            <div class="deck-detail-card-wrap">
+              <div></div>
+              ${renderCollectionCard(rank, suitKey, { hideFooter: true })}
+              ${memory ? `<div class="photo-bonus-note">Photo<span>+${MEMORY_PHOTO_DAMAGE_BONUS} damage</span></div>` : `<div></div>`}
+            </div>
+            <div class="deck-memory-row">
+              <button class="memory-link-btn" data-action="toggle-deck-memory-picker">${memory ? "Zmien photo" : "Dodaj photo"}</button>
+              ${memory ? `<button class="memory-remove-btn" data-action="remove-card-photo">Remove Photo</button>` : ""}
+            </div>
+            <div class="deck-detail-stats">
+              <div class="deck-stat">
+                <div class="deck-stat-label">Poziom</div>
+                <div class="deck-stat-value">Lv ${level}</div>
+              </div>
+              <div class="deck-stat">
+                <div class="deck-stat-label">DMG</div>
+                <div class="deck-stat-value">${totalDamage}</div>
+              </div>
+              <div class="deck-stat">
+                <div class="deck-stat-label">Bazowy</div>
+                <div class="deck-stat-value">${baseDamage}</div>
+              </div>
+            </div>
+            <div class="deck-detail-progress">
+              <div class="card-collection-meta">
+                <span>${needed ? `Duplikaty ${copies} / ${needed}` : "Karta na maksie"}</span>
+                <span>${upgradeCost ? `Koszt $${upgradeCost}` : "Brak dalszego upgrade'u"}</span>
+              </div>
+              <div class="card-progress"><span style="width:${progressRatio(level, copies)}%;"></span></div>
+            </div>
+            <button class="upgrade-btn ${ready ? "ready" : ""}" data-action="upgrade-card" ${ready ? "" : "disabled"}>
+              ${!needed ? "Max level" : ready ? `Upgrade za $${upgradeCost}` : canUpgrade ? `Brakuje $${Math.max(0, upgradeCost - state.player.soft)}` : `Potrzeba ${Math.max(0, needed - copies)} duplikat&#243;w`}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDeckMemoryPickerPopup() {
+      const key = state.deckFocus;
+      const memory = getCardMemory(key);
+      const memoryEntries = getUnlockedCollectionEntries();
+      return `
+        <div class="memory-picker-overlay">
+          <div class="memory-picker-popup">
+            <div class="memory-picker-head">
+              <div class="memory-picker-title">Przypisz photo do tej karty</div>
+              <button class="detail-close" data-action="toggle-deck-memory-picker">X</button>
+            </div>
+            <div class="memory-picker-scroll">
+              ${memoryEntries.length ? memoryEntries.map(entry => `
+                <div class="memory-picker-row">
+                  <div class="memory-picker-character">
+                    <div class="memory-picker-avatar" style="--memory-avatar:url('${entry.avatar}')"></div>
+                    <div class="memory-picker-name">${entry.name}</div>
+                  </div>
+                  <div class="memory-picker-photos">
+                    ${entry.photos.map((photo, index) => `
+                      <button class="memory-thumb ${memory?.characterId === entry.characterId && memory?.index === index ? "selected" : ""}" data-memory-assign="${key}:${entry.characterId}:${index}">
+                        <div class="memory-thumb-photo" style="--thumb-art:url('${photo.art}')"></div>
+                      </button>
+                    `).join("")}
+                  </div>
+                </div>
+              `).join("") : `<div class="album-note">Najpierw odblokuj photo w Collections.</div>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMap() {
+      const stage = getCurrentStage();
+      if (!stage.enemies.length) {
+        return `
+          <section class="map-card">
+            <div class="map-top">
+              <div class="map-title-block">
+                <div class="label">RUN ${stage.id}</div>
+                <h2>${stage.subtitle || stage.name}</h2>
+              </div>
+            </div>
+            <div class="map-legend">
+              <button class="primary-btn" data-nav="main">Back</button>
+            </div>
+          </section>
+        `;
+      }
+      const layout = getMapLayout(stage.id);
+      const currentStageNumber = Math.min(stage.enemies.length, state.currentNode + 1);
+      const runUpgradeIcons = renderRunUpgradeIcons();
+      const nodes = stage.enemies.map((enemy, index) => {
+        const point = layout.nodes[index] || layout.nodes[layout.nodes.length - 1];
+        const x = point.x;
+        const y = point.y;
+        const cleared = index < state.currentNode;
+        const active = index === state.currentNode;
+        const fill = cleared ? "#61f4ff" : active ? "#ffc857" : "rgba(255,255,255,0.18)";
+        return `
+          <g>
+            <circle cx="${x}" cy="${y}" r="${active ? 18 : 13}" fill="${fill}" stroke="rgba(255,255,255,0.2)" stroke-width="3"></circle>
+            <text x="${x}" y="${y + 5}" text-anchor="middle" fill="#071018" font-size="11" font-weight="800">${index + 1}</text>
+          </g>
+        `;
+      }).join("");
+      const playerPos = state.currentNode >= stage.enemies.length
+        ? layout.nodes[layout.nodes.length - 1]
+        : layout.nodes[state.currentNode];
+      const progressPct = Math.min(100, (state.currentNode / stage.enemies.length) * 100);
+      return `
+        <section class="map-card">
+          <div class="map-top">
+            <div class="map-title-block">
+              <div class="label">RUN ${stage.id}</div>
+              <h2>Stage ${stage.id}-${currentStageNumber}</h2>
+              ${runUpgradeIcons}
+            </div>
+          </div>
+          <div class="path-progress"><span style="width:${progressPct}%; background:linear-gradient(90deg, var(--gold), var(--cyan));"></span></div>
+          <div class="map-svg-wrap">
+            <svg viewBox="0 0 414 540" aria-label="Mapa miasta">
+              <defs>
+                <linearGradient id="pathLine" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffd057"></stop>
+                  <stop offset="100%" stop-color="#ff7e5f"></stop>
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="414" height="540" rx="30" fill="rgba(5, 10, 19, 0.12)"></rect>
+              <circle cx="68" cy="90" r="30" fill="rgba(97,244,255,0.08)"></circle>
+              <circle cx="320" cy="64" r="22" fill="rgba(255,208,87,0.08)"></circle>
+              <path d="${layout.route}" fill="none" stroke="url(#pathLine)" stroke-width="10" stroke-linecap="round"></path>
+              <path d="${layout.road}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16" stroke-linecap="round"></path>
+              ${nodes}
+              <g transform="translate(${playerPos.x - 18} ${playerPos.y - 38})">
+                <rect x="0" y="0" width="36" height="22" rx="8" fill="#08121c" stroke="rgba(255,255,255,0.24)"></rect>
+                <text x="18" y="15" text-anchor="middle" fill="#61f4ff" font-size="11" font-weight="900">YOU</text>
+                <circle cx="18" cy="32" r="6" fill="#61f4ff"></circle>
+              </g>
+            </svg>
+          </div>
+          <div class="map-legend">
+            <button class="primary-btn" data-action="start-battle">Start</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderBattle() {
+      const battle = state.battle;
+      const enemySuit = SUITS[battle.enemy.suit];
+      const enemyArtStyle = battle.enemy.art ? `style="--enemy-art:url('${battle.enemy.art}')"` : "";
+      const playerHasBlackjack = handTotal(battle.player.cards) === 21;
+      const summary = state.roundSummary;
+      const currentStep = summary ? summary.steps[summary.currentStepIndex] : null;
+      const enemyHighlights = summary ? highlightedIndexes(summary.enemy, currentStep) : [];
+      const playerHighlights = summary ? highlightedIndexes(summary.player, currentStep) : [];
+      const enemyNameFlash = summary && shouldFlashName(summary, "enemy", currentStep);
+      const playerNameFlash = summary && shouldFlashName(summary, "player", currentStep);
+      const introDialog = getActiveBattleDialog();
+      return `
+        <section class="battle-layout">
+          <div class="battle-side">
+            <div>
+              <div class="hp-row">
+                <div class="hp-meta">
+                  <span class="suit-badge ${isRedSuit(battle.enemy.suit) ? "suit-red" : ""}">${enemySuit.icon}</span>
+                  <span class="${enemyNameFlash ? "name-flash" : ""}">${battle.enemy.name}</span>
+                </div>
+                <strong>${battle.enemy.displayHp} / ${battle.enemy.maxHp}</strong>
+              </div>
+              <div class="hp-wrap">
+                ${battle.enemy.recentDamage ? `<div class="damage-float">-${battle.enemy.recentDamage}</div>` : ""}
+                <div class="hp-bar"><span class="hp-fill enemy-fill" style="width:${hpPct(battle.enemy.displayHp, battle.enemy.maxHp)}%"></span></div>
+              </div>
+            </div>
+            <div class="battle-body ${battle.enemy.art ? "enemy-body-art" : ""}" ${battle.enemy.art ? enemyArtStyle : ""}>
+              ${summary ? renderSideSummary(summary.enemy, "enemy") : `
+                <div class="portrait ${enemySuit.colorClass} ${battle.enemy.art ? "enemy-art" : ""}" ${enemyArtStyle}>
+                  <div class="portrait-figure"></div>
+                </div>
+              `}
+              <div class="cards-area ${battle.enemy.art ? "enemy-cards-art" : ""}" ${enemyArtStyle}>
+                <div class="total">Enemy total <strong>${displayTotal(battle.enemy.cards)}</strong></div>
+                ${!summary && battle.enemy.passed ? `<div class="pass-indicator">Pass</div>` : ""}
+                <div class="cards-stack ${summary ? "summary-active" : ""}">${renderCards(battle.enemy.cards, "enemy", summary?.winnerClass === "enemy", enemyHighlights)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="battle-side">
+            <div>
+              <div class="hp-row">
+                <div class="hp-meta">
+                  <span class="suit-badge">\u2605</span>
+                  <span class="${playerNameFlash ? "name-flash" : ""}">Kurier</span>
+                </div>
+                <strong>${battle.player.displayHp} / ${battle.player.maxHp}</strong>
+              </div>
+              <div class="hp-wrap">
+                ${battle.player.recentDamage ? `<div class="damage-float">-${battle.player.recentDamage}</div>` : ""}
+                <div class="hp-bar"><span class="hp-fill player-fill" style="width:${hpPct(battle.player.displayHp, battle.player.maxHp)}%"></span></div>
+              </div>
+            </div>
+            <div class="battle-body player-body">
+              <div class="cards-area">
+                <div class="total">Player total <strong>${displayTotal(battle.player.cards)}</strong></div>
+                ${!summary && battle.player.passed ? `<div class="pass-indicator">Pass</div>` : ""}
+                <div class="cards-stack ${summary ? "summary-active" : ""}">${renderCards(battle.player.cards, "player", summary?.winnerClass === "player", playerHighlights)}</div>
+              </div>
+              ${summary ? renderSideSummary(summary.player, "player") : `
+                <div class="controls-area">
+                  <button class="ghost-btn ${playerHasBlackjack ? "jackpot" : ""}" data-action="pass-turn" ${battle.locked || introDialog ? "disabled" : ""}>Pass</button>
+                  <button class="secondary-btn" data-action="draw-card" ${battle.locked || introDialog ? "disabled" : ""}>Draw</button>
+                </div>
+              `}
+            </div>
+          </div>
+          ${introDialog ? `
+            <div class="battle-dialog-layer" data-battle-dialog>
+              <div class="battle-speech">
+                ${introDialog.text}
+              </div>
+            </div>
+          ` : ""}
+        </section>
+      `;
+    }
+
+    function renderCards(cards, owner, isWinner, highlights = []) {
+      const battle = state.battle;
+      if (battle && !battle.renderedDeals) {
+        battle.renderedDeals = {};
+      }
+      return cards.map((card, index) => {
+        const suit = SUITS[card.suit];
+        const key = cardKey(card.rank, card.suit);
+        const memory = owner === "player" ? getCardMemory(key) : null;
+        const peek = index > 0 ? `${card.rank}${suit.icon}` : "";
+        const isNew = Boolean(!state.roundSummary && battle && card.dealtAt && !battle.renderedDeals[card.dealtAt]);
+        if (isNew) {
+          battle.renderedDeals[card.dealtAt] = true;
+        }
+        const isHighlighted = highlights.includes(index);
+        return `
+          <div class="mini-card ${isNew ? `from-${owner}` : ""} ${isWinner ? "round-win" : ""} ${isHighlighted ? "summary-hit" : ""}" style="--i:${index};">
+            ${renderCollectionCard(card.rank, card.suit, {
+              hideFooter: true,
+              memoryOverride: memory,
+              includeMemoryDamage: owner === "player",
+              showUpgrade: false
+            })}
+            ${peek ? `<div class="peek">${peek}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSideSummary(sideSummary, sideName) {
+      const lines = sideSummary.lines.map(line => {
+        const active = line.key === sideSummary.currentStep;
+        const shown = sideSummary.visibleKeys.includes(line.key);
+        const isUpgrade = ["runSuit", "runRank", "runCombo", "stageFlow", "runBlackjack"].includes(line.key);
+        return shown ? `<div class="damage-line ${active ? "active" : ""}"><span class="label">${isUpgrade ? renderUpgradeStars(line.upgradeCount || 1) : ""}${line.label}</span><span class="value">+${line.amount}</span></div>` : "";
+      }).join("");
+      const reduced = sideSummary.reducedTotalVisible && sideSummary.originalTotal !== sideSummary.reducedTotal;
+      return `
+        <div class="summary-panel ${sideName}">
+          <div class="summary-head">
+            <strong>${sideSummary.title}</strong>
+            <span class="summary-pill ${sideSummary.winnerClass}">${sideSummary.winnerLabel}</span>
+          </div>
+          <div class="summary-lines">
+            ${lines}
+            <div class="damage-total ${reduced ? "strike" : ""}"><span>Total</span><span class="value">+${reduced ? sideSummary.originalTotal : sideSummary.totalShown}</span></div>
+            ${reduced ? `<div class="damage-total final"><span>After loss</span><span class="value">+${sideSummary.reducedTotal}</span></div>` : ""}
+          </div>
+          ${sideName === "player" && sideSummary.readyForNext ? `<div class="summary-actions"><button class="primary-btn" data-action="next-round">${getAdvanceButtonLabel()}</button></div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderReward() {
+      if (state.reward?.type === "memory-unlock") {
+        const revealed = Boolean(state.reward.revealedMemory);
+        return `
+          <div class="reward-overlay">
+            <div class="reward-card">
+              <h3>${state.reward.title}</h3>
+              <div class="memory-reward-grid">
+                <div class="reward-flip-card ${revealed ? "revealed" : ""}">
+                  <button data-action="reveal-memory" aria-label="Reveal memory card">
+                    <div class="reward-flip-inner">
+                    <div class="reward-back memory-back">
+                      <div class="reward-back-core">MEMORY</div>
+                    </div>
+                    <div class="reward-face">
+                      ${renderMemoryPhotoCard({ art: state.reward.memoryArt }, { unlocked: true })}
+                    </div>
+                  </div>
+                </button>
+              </div>
+              </div>
+              <div class="memory-hint">${state.reward.message || "Możesz obejrzeć zdobyte wspomnienia w Collections"}</div>
+              <div style="display:flex; justify-content:center; margin-top:10px; ${revealed ? "" : "visibility:hidden; pointer-events:none;"}">
+                <button class="primary-btn" data-action="claim-reward">${state.reward.buttonLabel || "Continue"}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      const cards = state.reward.cards || [];
+      const revealedCards = state.reward.revealedCards || cards.map(() => false);
+      const allRevealed = !cards.length || revealedCards.every(Boolean);
+      return `
+        <div class="reward-overlay">
+          <div class="reward-card">
+            <h3>${state.reward.title}</h3>
+            ${state.reward.body ? `<p>${state.reward.body}</p>` : ""}
+            ${cards.length ? `
+              <div class="reward-pack-grid">
+                ${cards.map((card, index) => {
+                  const revealed = Boolean(revealedCards[index]);
+                  const key = cardKey(card.rank, card.suit);
+                  const level = state.deckLevels[key] || 1;
+                  const copiesBefore = Number.isFinite(card.copiesBefore) ? card.copiesBefore : Math.max(0, (state.deckCopies[key] || 0) - (card.amount || 0));
+                  const copiesAfter = Number.isFinite(card.copiesAfter) ? card.copiesAfter : (state.deckCopies[key] || 0);
+                  const progressFromRatio = progressRatio(level, copiesBefore);
+                  const progressToRatio = progressRatio(level, copiesAfter);
+                  const progressAnimated = revealed && state.reward.progressAnimatedIndex === index;
+                  return `
+                    <div class="reward-pack-card ${revealed ? "revealed" : ""}">
+                      <div class="reward-pack-qty">x${card.amount}</div>
+                      <div class="reward-flip-card ${revealed ? "revealed" : ""}">
+                        <button data-reward-index="${index}" aria-label="Reveal reward card">
+                          <div class="reward-flip-inner">
+                            <div class="reward-back">
+                              <div class="reward-back-core">RUNNER</div>
+                            </div>
+                            <div class="reward-face">
+                              ${renderCollectionCard(card.rank, card.suit, {
+                                progressFromRatio,
+                                progressToRatio,
+                                progressAnimated
+                              })}
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            ` : ""}
+            <div style="display:flex; justify-content:center; ${allRevealed ? "" : "visibility:hidden; pointer-events:none;"}">
+              <button class="primary-btn" data-action="claim-reward">${state.reward.buttonLabel || "Continue"}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderUpgradeChoice() {
+      const options = state.upgradeChoice?.options || [];
+      return `
+        <div class="upgrade-choice">
+          <h3>Wybierz rozwini\u0119cie</h3>
+          <p>${state.upgradeChoice.title}</p>
+          <div class="upgrade-grid">
+            ${options.map((option, index) => `
+              <button class="upgrade-option" data-upgrade-index="${index}">
+                <div class="upgrade-art" style="background-color:${option.accent}14;">
+                  <div class="upgrade-symbol" style="color:${option.accent};">${option.symbol}</div>
+                </div>
+                <div class="upgrade-copy">
+                  <div class="upgrade-name">${option.title}</div>
+                  <div class="upgrade-desc">${option.description}</div>
+                </div>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function bindEvents() {
+      closeBattleEl.onclick = null;
+      healBattleEl.onclick = null;
+      skipBattleStageEl.onclick = null;
+      if (state.screen === "battle") {
+        closeBattleEl.onclick = () => {
+          if (!state.battle?.locked) {
+            failRun();
+            render();
+          }
+        };
+        healBattleEl.onclick = () => {
+          healPlayerForTest();
+        };
+        skipBattleStageEl.onclick = () => {
+          skipBattleStageForTest();
+        };
+      }
+      app.querySelectorAll("[data-nav]").forEach(el => {
+        el.addEventListener("click", () => {
+          const nav = el.dataset.nav;
+          if (!nav) {
+            return;
+          }
+          state.screen = "home";
+          state.subScreen = nav === "deck" ? "deck" : nav === "collections" ? "collections" : "main";
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-action]").forEach(el => {
+        el.addEventListener("click", () => handleAction(el.dataset.action));
+      });
+
+      app.querySelectorAll("[data-suit]").forEach(el => {
+        el.addEventListener("click", () => {
+          state.deckSuit = el.dataset.suit;
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-upgrade-index]").forEach(el => {
+        el.addEventListener("click", () => pickUpgrade(Number(el.dataset.upgradeIndex)));
+      });
+
+      app.querySelectorAll("[data-card-focus]").forEach(el => {
+        el.addEventListener("click", () => {
+          state.deckFocus = el.dataset.cardFocus;
+          state.deckMemoryPickerOpen = false;
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-collection-open]").forEach(el => {
+        el.addEventListener("click", () => {
+          state.collectionFocus = el.dataset.collectionOpen;
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-memory-open]").forEach(el => {
+        el.addEventListener("click", () => {
+          const [characterId, indexText] = el.dataset.memoryOpen.split(":");
+          const photos = getCollectionPhotos(characterId);
+          const photo = photos[Number(indexText)];
+          if (!photo) {
+            return;
+          }
+          state.collectionImageFocus = {
+            characterId,
+            index: Number(indexText),
+            art: photo.art
+          };
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-memory-assign]").forEach(el => {
+        el.addEventListener("click", () => {
+          const [cardKeyValue, characterId, indexText] = el.dataset.memoryAssign.split(":");
+          const photos = getCollectionPhotos(characterId);
+          const photo = photos[Number(indexText)];
+          if (!photo) {
+            return;
+          }
+          state.cardMemories[cardKeyValue] = {
+            characterId,
+            index: Number(indexText),
+            art: photo.art
+          };
+          state.deckMemoryPickerOpen = false;
+          render();
+        });
+      });
+
+      app.querySelectorAll("[data-reward-index]").forEach(el => {
+        el.addEventListener("click", () => {
+          revealRewardCard(Number(el.dataset.rewardIndex), el.closest(".reward-pack-card"));
+        });
+      });
+
+      app.querySelectorAll("[data-run-go]").forEach(el => {
+        el.addEventListener("click", () => {
+          const picker = el.closest(".test-run-picker")?.querySelector("[data-run-picker]");
+          switchTestRun(Number(picker?.value));
+        });
+      });
+
+      const homeChatOverlay = document.getElementById("homeChatOverlay");
+      if (homeChatOverlay) {
+        homeChatOverlay.addEventListener("click", event => {
+          const head = event.target.closest(".chat-head");
+          if (head) {
+            return;
+          }
+          advanceHomeChat();
+        });
+      }
+
+      const battleDialogLayer = app.querySelector("[data-battle-dialog]");
+      if (battleDialogLayer) {
+        battleDialogLayer.addEventListener("click", advanceBattleDialog);
+      }
+    }
+
+    function switchTestRun(runId) {
+      const stage = STAGES.find(item => item.id === runId);
+      if (!stage) {
+        return;
+      }
+      unlockPreviousRunMemoriesForTest(runId);
+      state.selectedStage = runId;
+      state.unlockedStage = Math.max(state.unlockedStage || 1, runId);
+      state.currentNode = 0;
+      state.screen = "home";
+      state.subScreen = "main";
+      state.battle = null;
+      state.reward = null;
+      state.upgradeChoice = null;
+      state.runBuffs = defaultRunBuffs();
+      state.runUpgradeCounts = defaultRunUpgradeCounts();
+      state.stageCardCount = 0;
+      state.runRoundCount = 0;
+      state.player.currentHp = playerMaxHp();
+      state.homeChat = { runId, unlocked: false, open: false, step: -1, waitingForClose: false, messages: [] };
+      saveState();
+      render();
+    }
+
+    function unlockPreviousRunMemoriesForTest(runId) {
+      for (const stage of STAGES) {
+        if (stage.id >= runId) {
+          continue;
+        }
+        for (const unlock of getRunMemoryUnlocks(stage.id)) {
+          unlockCollectionMemoryReward(unlock);
+        }
+      }
+    }
+
+    function handleAction(action) {
+      switch (action) {
+        case "play-stage":
+          if (!state.homeChat?.unlocked) {
+            break;
+          }
+          if (!getCurrentStage().enemies.length) {
+            state.screen = "map";
+            state.subScreen = "main";
+            break;
+          }
+          state.runRoundCount = 0;
+          state.stageCardCount = 0;
+          state.runBuffs = defaultRunBuffs();
+          state.runUpgradeCounts = defaultRunUpgradeCounts();
+          state.upgradeChoice = null;
+          state.screen = "map";
+          state.subScreen = "main";
+          if (state.currentNode >= getCurrentStage().enemies.length) {
+            state.currentNode = 0;
+          }
+          pushLog(`Startujesz RUN ${getCurrentStage().id}. Cel: Stage ${getCurrentStage().id}-${state.currentNode + 1}.`);
+          break;
+        case "open-boss-chat":
+          openHomeChat();
+          break;
+        case "start-battle":
+          startBattle();
+          break;
+        case "draw-card":
+          playerDraw();
+          break;
+        case "pass-turn":
+          playerPass();
+          break;
+        case "claim-reward":
+          claimReward();
+          break;
+        case "reveal-memory":
+          revealMemoryReward();
+          break;
+        case "next-round":
+          advanceAfterRound();
+          break;
+        case "new-game":
+          resetGame();
+          break;
+        case "close-deck-focus":
+          state.deckFocus = null;
+          state.deckMemoryPickerOpen = false;
+          break;
+        case "toggle-deck-memory-picker":
+          state.deckMemoryPickerOpen = !state.deckMemoryPickerOpen;
+          break;
+        case "remove-card-photo":
+          if (state.deckFocus && state.cardMemories?.[state.deckFocus]) {
+            delete state.cardMemories[state.deckFocus];
+          }
+          state.deckMemoryPickerOpen = false;
+          break;
+        case "close-collection":
+          state.collectionFocus = null;
+          break;
+        case "close-memory-view":
+          state.collectionImageFocus = null;
+          break;
+        case "upgrade-card":
+          upgradeFocusedCard();
+          break;
+        case "flip-reward-card":
+          break;
+        case "deck-suit":
+          break;
+        default:
+          break;
+      }
+      render();
+    }
+
+    function getCurrentStage() {
+      return STAGES.find(stage => stage.id === state.selectedStage) || STAGES[0];
+    }
+
+    function currentStageNodeCount() {
+      return Math.max(1, getCurrentStage().enemies.length);
+    }
+
+    function getEnemyArt(stageId, nodeIndex) {
+      const enemy = getCurrentStage().enemies[nodeIndex];
+      if (!enemy) {
+        return "runner_files/hearts_girl_01.png";
+      }
+      if (enemy.art) {
+        return enemy.art;
+      }
+      if (enemy.suit === "hearts") {
+        const portraits = [
+          "runner_files/hearts_girl_01.png",
+          "runner_files/hearts_girl_02.png",
+          "runner_files/hearts_girl_03.png"
+        ];
+        return portraits[(stageId + nodeIndex) % portraits.length];
+      }
+      if (enemy.suit === "spades") {
+        if (enemy.role === "boss") {
+          return "runner_files/spades_boss_01.png";
+        }
+        const portraits = [
+          "runner_files/spades_thug_01.png",
+          "runner_files/spades_thug_02.png"
+        ];
+        return portraits[(stageId + nodeIndex) % portraits.length];
+      }
+      if (enemy.suit === "clubs") {
+        const portraits = [
+          "runner_files/clubs_policeman_01.png",
+          "runner_files/clubs_police_02.png",
+          "runner_files/clubs_security_01.png"
+        ];
+        return portraits[(stageId + nodeIndex) % portraits.length];
+      }
+      if (enemy.suit === "diamonds") {
+        return "runner_files/Karo_mechanic_01.png";
+      }
+      return "runner_files/map_bg.png";
+    }
+
+    function getEnemyDisplayName(enemy, stageId, nodeIndex) {
+      if (enemy.art) {
+        return enemy.name;
+      }
+      if (enemy.suit === "hearts") {
+        const names = ["Basia Neon", "Velvet Rox", "Nina Afterdark"];
+        return names[(stageId + nodeIndex) % names.length];
+      }
+      if (enemy.suit === "diamonds") {
+        const names = ["Mechanik V8", "Chrome Wrench", "Nitro Jack"];
+        return names[(stageId + nodeIndex) % names.length];
+      }
+      if (enemy.suit === "spades") {
+        if (enemy.role === "boss") {
+          return "Grim King";
+        }
+        const names = ["Tyron the Thug", "Razor Vex", "King Ring"];
+        return names[(stageId + nodeIndex) % names.length];
+      }
+      if (enemy.suit === "clubs") {
+        const names = ["Corrupted Cop", "Officer Grave", "Night Patrol", "Steel Guard"];
+        return names[(stageId + nodeIndex) % names.length];
+      }
+      return enemy.name;
+    }
+
+    function sampleUpgradeChoices() {
+      const pool = [...RUN_UPGRADES];
+      const picked = [];
+      while (picked.length < 3 && pool.length) {
+        const index = Math.floor(Math.random() * pool.length);
+        picked.push(pool.splice(index, 1)[0]);
+      }
+      return picked;
+    }
+
+    function createUpgradeChoice(stageId, nodeIndex) {
+      return {
+        title: `Stage ${stageId}-${nodeIndex}`,
+        options: sampleUpgradeChoices()
+      };
+    }
+
+    function currentRunUpgradeList() {
+      return RUN_UPGRADES.filter(upgrade => getRunUpgradeCount(upgrade.id) > 0);
+    }
+
+    function getRunUpgradeCount(upgradeId) {
+      return Math.max(0, state.runUpgradeCounts?.[upgradeId] || 0);
+    }
+
+    function renderUpgradeStars(count) {
+      const starCount = Math.max(1, Math.min(9, count || 1));
+      return `<span class="upgrade-stars">${Array.from({ length: starCount }, () => "★").join("")}</span>`;
+    }
+
+    function renderRunUpgradeIcons() {
+      const upgrades = currentRunUpgradeList();
+      if (!upgrades.length) {
+        return "";
+      }
+      return `
+        <div class="run-upgrade-row">
+          ${upgrades.map(upgrade => {
+            const count = getRunUpgradeCount(upgrade.id);
+            return `<span class="run-upgrade-chip" title="${upgrade.title}" style="color:${upgrade.accent};"><span>${upgrade.symbol}</span>${count > 1 ? `<span class="run-upgrade-count">x${count}</span>` : ""}</span>`;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function pickUpgrade(index) {
+      const choice = state.upgradeChoice;
+      if (!choice) {
+        return;
+      }
+      const picked = choice.options[index];
+      if (!picked) {
+        return;
+      }
+      applyRunUpgrade(picked);
+      state.upgradeChoice = null;
+      render();
+    }
+
+    function applyRunUpgrade(upgrade) {
+      state.runUpgradeCounts[upgrade.id] = getRunUpgradeCount(upgrade.id) + 1;
+      switch (upgrade.type) {
+        case "suit":
+          state.runBuffs.suit[upgrade.suit] += upgrade.value;
+          break;
+        case "rank":
+          state.runBuffs.rank[upgrade.rank] += upgrade.value;
+          break;
+        case "pair":
+          state.runBuffs.pair += upgrade.value;
+          break;
+        case "trips":
+          state.runBuffs.trips += upgrade.value;
+          break;
+        case "blackjack":
+          state.runBuffs.blackjack += upgrade.value;
+          break;
+        case "stageCards":
+          state.runBuffs.stageCards += upgrade.value;
+          break;
+        case "stageHeal":
+          state.runBuffs.stageHeal += upgrade.value;
+          break;
+        default:
+          break;
+      }
+    }
+
+    function startBattle() {
+      const stage = getCurrentStage();
+      const enemyBase = stage.enemies[state.currentNode];
+      if (!enemyBase) {
+        return;
+      }
+      state.stageCardCount = 0;
+      const battle = {
+        enemy: {
+          ...enemyBase,
+          name: getEnemyDisplayName(enemyBase, stage.id, state.currentNode),
+          art: getEnemyArt(stage.id, state.currentNode),
+          maxHp: enemyBase.hp,
+          hp: enemyBase.hp,
+          displayHp: enemyBase.hp,
+          recentDamage: 0,
+          cards: [],
+          passed: false
+        },
+        player: {
+          hp: state.player.currentHp,
+          maxHp: playerMaxHp(),
+          displayHp: state.player.currentHp,
+          recentDamage: 0,
+          cards: [],
+          passed: false
+        },
+        deck: shuffle(createDeck()),
+        locked: false,
+        turn: 1,
+        dealSequence: 0,
+        renderedDeals: {},
+        introDialogs: createBattleIntroDialogs(stage.id, state.currentNode),
+        introDialogIndex: 0,
+        introComplete: false
+      };
+      battle.locked = battle.introDialogs.length > 0;
+      state.battle = battle;
+      state.screen = "battle";
+      state.logs = [`Stage ${stage.id}-${state.currentNode + 1}: ${enemyBase.name} wchodzi do gry.`];
+      if (battle.introDialogs.length) {
+        pushLog(`${battle.enemy.name} zaczyna rozmowe.`);
+        return;
+      }
+      dealOpeningCards();
+    }
+
+    function createBattleIntroDialogs(stageId, nodeIndex) {
+      const configuredDialogs = getConfiguredBattleIntroDialogs(stageId, nodeIndex);
+      if (configuredDialogs) {
+        return configuredDialogs;
+      }
+      if (stageId === 1 && nodeIndex === 0) {
+        return [
+          { speaker: "enemy", text: "Więc chcesz aby naprawiła ci tego gruchota w pół godziny?" },
+          { speaker: "enemy", text: "Jestem najlepszym mechanikiem w mieście, ale to jest nierealne..." },
+          { speaker: "enemy", text: "Masz robotę? Chyba będziesz musiał wziąć taksówkę, sorry bro..." }
+        ];
+      }
+      if (stageId === 1 && nodeIndex === 1) {
+        return [
+          { speaker: "enemy", text: "...bulp..." },
+          { speaker: "enemy", text: "...kierownik szuka taksi?" },
+          { speaker: "enemy", text: "...to kierownik grzecznie zapłaci, a ja pokażę..." }
+        ];
+      }
+      return [];
+    }
+
+    function getConfiguredBattleIntroDialogs(stageId, nodeIndex) {
+      const run = window.RUNNER_STAGE_DATA?.runs?.find(item => Number(item.id) === Number(stageId));
+      const stage = run?.stages?.[nodeIndex];
+      if (!stage || !Array.isArray(stage.preFightDialogs)) {
+        return null;
+      }
+      return stage.preFightDialogs
+        .filter(dialog => dialog?.text?.trim())
+        .map(dialog => ({ speaker: dialog.speakerId || "enemy", text: dialog.text }));
+    }
+
+    function getActiveBattleDialog() {
+      const battle = state.battle;
+      if (!battle?.introDialogs?.length || battle.introComplete) {
+        return null;
+      }
+      return battle.introDialogs[battle.introDialogIndex] || null;
+    }
+
+    function advanceBattleDialog() {
+      const battle = state.battle;
+      if (!battle?.introDialogs?.length || battle.introComplete) {
+        return;
+      }
+      battle.introDialogIndex += 1;
+      if (battle.introDialogIndex < battle.introDialogs.length) {
+        render();
+        return;
+      }
+      battle.introComplete = true;
+      battle.locked = false;
+      dealOpeningCards();
+      render();
+    }
+
+    function dealOpeningCards() {
+      const battle = state.battle;
+      if (!battle || battle.player.cards.length || battle.enemy.cards.length) {
+        return;
+      }
+      drawForSide(battle.player);
+      drawForSide(battle.enemy);
+      pushLog("Obie strony dobierajÄ… pierwszÄ… kartÄ™. Blackjackowa rozgrywka startuje.");
+    }
+
+    function createDeck() {
+      const deck = [];
+      for (const suit of Object.keys(SUITS)) {
+        for (const rank of RANKS) {
+          deck.push({ rank, suit });
+        }
+      }
+      return deck;
+    }
+
+    function shuffle(deck) {
+      const copy = [...deck];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function drawForSide(side) {
+      if (!state.battle.deck.length) {
+        state.battle.deck = shuffle(createDeck());
+      }
+      state.battle.dealSequence += 1;
+      const card = state.battle.deck.pop();
+      side.cards.unshift({ ...card, dealtAt: state.battle.dealSequence });
+    }
+
+    function playerDraw() {
+      const battle = state.battle;
+      if (!battle || battle.locked) {
+        return;
+      }
+      battle.locked = true;
+      drawForSide(battle.player);
+      pushLog(`Dobierasz kartÄ™. TwĂłj wynik to ${displayTotal(battle.player.cards)}.`);
+      render();
+      setTimeout(() => {
+        resolveSingleEnemyTurn(() => {
+          const resolved = evaluateRound();
+          if (!resolved && state.battle) {
+            state.battle.locked = false;
+            render();
+          }
+        });
+      }, 320);
+    }
+
+    function playerPass() {
+      const battle = state.battle;
+      if (!battle || battle.locked) {
+        return;
+      }
+      battle.locked = true;
+      battle.player.passed = true;
+      pushLog("Pass. Trzymasz wynik i czekasz na ruch przeciwnika.");
+      render();
+      resolveEnemyAutoTurn(() => {
+        const resolved = evaluateRound();
+        if (!resolved && state.battle) {
+          state.battle.locked = false;
+          render();
+        }
+      });
+    }
+
+    function resolveSingleEnemyTurn(onDone) {
+      const battle = state.battle;
+      if (!battle) {
+        return;
+      }
+      if (battle.enemy.passed || handTotal(battle.enemy.cards) > 21) {
+        if (onDone) {
+          onDone();
+        }
+        return;
+      }
+      enemyTurn();
+      render();
+      if (onDone) {
+        setTimeout(onDone, 520);
+      }
+    }
+
+    function resolveEnemyAutoTurn(onDone) {
+      const battle = state.battle;
+      if (!battle) {
+        return;
+      }
+      if (battle.enemy.passed || handTotal(battle.enemy.cards) > 21) {
+        if (onDone) {
+          onDone();
+        }
+        return;
+      }
+      const didDraw = enemyTurn();
+      render();
+      if (!didDraw) {
+        if (onDone) {
+          setTimeout(onDone, 220);
+        }
+        return;
+      }
+      setTimeout(() => {
+        if (!state.battle) {
+          return;
+        }
+        if (state.battle.enemy.passed || handTotal(state.battle.enemy.cards) > 21) {
+          if (onDone) {
+            onDone();
+          }
+          return;
+        }
+        resolveEnemyAutoTurn(onDone);
+      }, 560);
+    }
+
+    function enemyTurn() {
+      const battle = state.battle;
+      if (battle.enemy.passed) {
+        return false;
+      }
+      const total = handTotal(battle.enemy.cards);
+      const playerTotal = handTotal(battle.player.cards);
+      const playerBust = playerTotal > 21;
+      const enemyIsWinning = battle.player.passed && !playerBust && total <= 21 && total > playerTotal;
+      const enemyCanTie = battle.player.passed && !playerBust && total === playerTotal;
+      const shouldDraw = !playerBust && !enemyIsWinning && !enemyCanTie && (total < 16 || (total < 18 && Math.random() > 0.65));
+      if (shouldDraw) {
+        drawForSide(battle.enemy);
+        pushLog(`${battle.enemy.name} dobiera kartÄ™. Wynik przeciwnika: ${displayTotal(battle.enemy.cards)}.`);
+        return true;
+      } else {
+        battle.enemy.passed = true;
+        pushLog(`${battle.enemy.name} pasuje przy ${displayTotal(battle.enemy.cards)}.`);
+        return false;
+      }
+    }
+
+    function evaluateRound() {
+      const battle = state.battle;
+      const playerTotal = handTotal(battle.player.cards);
+      const enemyTotal = handTotal(battle.enemy.cards);
+      const playerBust = playerTotal > 21;
+      const enemyBust = enemyTotal > 21;
+      const bothPassed = battle.player.passed && battle.enemy.passed;
+
+      if (!(playerBust || enemyBust || bothPassed)) {
+        return false;
+      }
+
+      battle.locked = true;
+      state.runRoundCount += 1;
+      state.stageCardCount += battle.player.cards.length;
+      setTimeout(() => {
+        if (playerBust && enemyBust) {
+          state.roundSummary = buildDoubleBustSummary();
+          state.pendingRoundResult = { type: "draw-reset" };
+          render();
+          return;
+        }
+
+        const outcome = determineRoundWinner(playerTotal, enemyTotal, playerBust, enemyBust);
+        const playerDamage = playerBust ? buildBustDamage() : calculateDamageBreakdown(battle.player.cards, battle.enemy.suit, { isPlayer: true, stageCardsUsed: state.stageCardCount });
+        const enemyDamage = enemyBust ? buildBustDamage() : calculateDamageBreakdown(battle.enemy.cards, battle.enemy.suit, { isPlayer: false, stageCardsUsed: 0 });
+        applyWinnerBonus(playerDamage, enemyDamage, outcome.winnerClass);
+        applyLoserPenalty(playerDamage, enemyDamage, outcome.winnerClass);
+        const enemyAfter = Math.max(0, battle.enemy.hp - playerDamage.total);
+        const playerAfter = Math.max(0, battle.player.hp - enemyDamage.total);
+
+        state.roundSummary = buildRoundSummary(playerDamage, enemyDamage, outcome.winnerClass);
+        render();
+        state.pendingRoundResult = {
+          type: enemyAfter <= 0 || playerAfter <= 0 ? "finish-battle" : "reset-round",
+          enemyAfter,
+          playerAfter,
+          enemyDamage: playerDamage.total,
+          playerDamage: enemyDamage.total
+        };
+        runRoundSummarySequence(enemyAfter, playerAfter);
+      }, 400);
+      return true;
+    }
+
+    function resetRound() {
+      const battle = state.battle;
+      battle.player.cards = [];
+      battle.enemy.cards = [];
+      battle.player.passed = false;
+      battle.enemy.passed = false;
+      battle.player.recentDamage = 0;
+      battle.enemy.recentDamage = 0;
+      state.roundReveal = null;
+      state.roundSummary = null;
+      battle.locked = false;
+      battle.turn += 1;
+      battle.renderedDeals = {};
+      drawForSide(battle.player);
+      drawForSide(battle.enemy);
+    }
+
+    function finishBattle() {
+      const battle = state.battle;
+      const stage = getCurrentStage();
+      if (battle.player.hp <= 0 && battle.enemy.hp <= 0) {
+        failRun();
+        return;
+      }
+
+      if (battle.player.hp <= 0) {
+        failRun();
+        return;
+      }
+
+      state.currentNode += 1;
+      if (state.currentNode >= stage.enemies.length) {
+        const firstClear = !state.completedStages.includes(stage.id);
+        state.completedStages.push(stage.id);
+        const packCards = createBattlePack(battle.enemy.suit);
+        grantBattlePack(packCards);
+        awardStage(stage, packCards, { firstClear });
+      } else {
+        const healPct = state.runBuffs.stageHeal || 0.10;
+        const healedHp = Math.min(playerMaxHp(), battle.player.hp + Math.round(playerMaxHp() * healPct));
+        state.player.currentHp = healedHp;
+        state.screen = "map";
+        state.battle = null;
+        state.upgradeChoice = createUpgradeChoice(stage.id, state.currentNode);
+      }
+    }
+
+    function healPlayerForTest() {
+      const battle = state.battle;
+      if (!battle) {
+        return;
+      }
+      const maxHp = playerMaxHp();
+      battle.player.hp = maxHp;
+      battle.player.displayHp = maxHp;
+      battle.player.recentDamage = 0;
+      state.player.currentHp = maxHp;
+      saveState();
+      render();
+    }
+
+    function skipBattleStageForTest() {
+      const battle = state.battle;
+      if (!battle) {
+        return;
+      }
+      const stage = getCurrentStage();
+      const skippedSuit = battle.enemy.suit;
+      state.currentNode += 1;
+      state.roundReveal = null;
+      state.roundSummary = null;
+      state.pendingRoundResult = null;
+      state.player.currentHp = battle.player.hp;
+      if (state.currentNode >= stage.enemies.length) {
+        const firstClear = !state.completedStages.includes(stage.id);
+        if (firstClear) {
+          state.completedStages.push(stage.id);
+        }
+        const packCards = createBattlePack(skippedSuit);
+        grantBattlePack(packCards);
+        awardStage(stage, packCards, { firstClear });
+        render();
+        return;
+      }
+      state.screen = "map";
+      state.subScreen = "main";
+      state.battle = null;
+      state.upgradeChoice = createUpgradeChoice(stage.id, state.currentNode);
+      saveState();
+      render();
+    }
+
+    function awardStage(stage, packCards = [], options = {}) {
+      state.player.soft += stage.rewardSoft;
+      gainXp(stage.rewardXp);
+      const nextStage = Math.min(STAGES.length, stage.id + 1);
+      const memoryUnlock = getPendingMemoryUnlock(stage.id);
+      state.unlockedStage = Math.max(state.unlockedStage, nextStage);
+      state.selectedStage = nextStage;
+      state.currentNode = 0;
+      state.battle = null;
+      state.screen = "home";
+      state.subScreen = "main";
+      state.homeChat = { runId: nextStage, unlocked: false, open: false, step: -1, waitingForClose: false, messages: [] };
+      state.upgradeChoice = null;
+      state.runBuffs = defaultRunBuffs();
+      state.runUpgradeCounts = defaultRunUpgradeCounts();
+      state.stageCardCount = 0;
+      state.reward = {
+        type: "stage-clear",
+        title: `Run ${stage.id} cleared`,
+        body: `Boss pokonany. Odbierasz $${stage.rewardSoft} i ${stage.rewardXp} XP. ${nextStage > stage.id ? `Odblokowano RUN ${nextStage}.` : "Wszystkie dostÄ™pne runy ukoĹ„czone."}`,
+        cards: packCards,
+        revealedCards: packCards.map(() => false),
+        buttonLabel: "Continue",
+        afterClaim: memoryUnlock ? { type: "memory-unlock", unlock: memoryUnlock } : { type: "home" }
+      };
+      state.runRoundCount = 0;
+    }
+
+    function gainXp(amount) {
+      state.player.xp += amount;
+      while (state.player.xp >= state.player.xpToNext) {
+        state.player.xp -= state.player.xpToNext;
+        state.player.level += 1;
+        state.player.xpToNext += 40;
+        state.player.currentHp = playerMaxHp();
+      }
+    }
+
+    function claimReward() {
+      const reward = state.reward;
+      state.reward = null;
+      state.deckFocus = null;
+      if (reward?.afterClaim?.type === "memory-unlock") {
+        const unlock = reward.afterClaim.unlock;
+        unlockCollectionMemoryReward(unlock);
+        const photo = getCollectionPhotos(unlock.characterId).find(item => item.art === unlock.photoArt) || { art: unlock.photoArt };
+        state.reward = {
+          type: "memory-unlock",
+          title: "You gained a new memory",
+          memoryArt: photo?.art || "runner_files/memories/nitro_01.png",
+          message: unlock.text || "Możesz obejrzeć zdobyte wspomnienia w Collections",
+          revealedMemory: false,
+          buttonLabel: "Continue",
+          afterClaim: { type: "home" }
+        };
+        return;
+      }
+      if (reward?.afterClaim?.type === "upgrade") {
+        state.screen = "map";
+        state.subScreen = "main";
+        state.upgradeChoice = reward.afterClaim.choice;
+        return;
+      }
+      state.screen = "home";
+      state.subScreen = "main";
+    }
+
+    function revealRewardCard(index, cardEl = null) {
+      if (!state.reward?.cards?.length) {
+        return;
+      }
+      if (!Array.isArray(state.reward.revealedCards)) {
+        state.reward.revealedCards = state.reward.cards.map(() => false);
+      }
+      if (state.reward.revealedCards[index]) {
+        return;
+      }
+      state.reward.revealedCards[index] = true;
+      state.reward.progressAnimatedIndex = index;
+      if (!cardEl) {
+        render();
+        return;
+      }
+      cardEl.classList.add("revealed");
+      cardEl.querySelector(".reward-flip-card")?.classList.add("revealed");
+      setTimeout(() => {
+        if (state.reward) {
+          render();
+        }
+      }, 760);
+    }
+
+    function revealMemoryReward() {
+      if (!state.reward || state.reward.type !== "memory-unlock" || state.reward.revealedMemory) {
+        return;
+      }
+      state.reward.revealedMemory = true;
+      render();
+    }
+
+    function unlockCollectionMemoryReward(unlock) {
+      if (!unlock?.characterId || !unlock?.photoArt) {
+        return;
+      }
+      const rewardKey = getMemoryRewardKey(unlock);
+      if (state.memoryRewardsClaimed?.[rewardKey]) {
+        return;
+      }
+      if (!state.collections[unlock.characterId]) {
+        state.collections[unlock.characterId] = { stars: 0, photosUnlocked: 0 };
+      }
+      const photos = getCollectionPhotos(unlock.characterId);
+      const photoIndex = Math.max(0, photos.findIndex(photo => photo.art === unlock.photoArt));
+      const collection = state.collections[unlock.characterId];
+      collection.stars = Math.min(5, Math.max(collection.stars || 0, photoIndex + 1));
+      collection.photosUnlocked = Math.max(collection.photosUnlocked || 0, photoIndex + 1);
+      state.memoryRewardsClaimed[rewardKey] = true;
+      saveState();
+    }
+
+    function advanceAfterRound() {
+      if (!state.pendingRoundResult) {
+        return;
+      }
+      const pending = state.pendingRoundResult;
+      state.roundSummary = null;
+      state.roundReveal = null;
+      state.pendingRoundResult = null;
+      if (pending.type === "draw-reset" || pending.type === "reset-round") {
+        resetRound();
+        return;
+      }
+      if (pending.type === "finish-battle") {
+        finishBattle();
+      }
+    }
+
+    function failRun() {
+      const stage = getCurrentStage();
+      const roundXp = state.runRoundCount;
+      if (roundXp > 0) {
+        gainXp(roundXp);
+      }
+      state.screen = "home";
+      state.subScreen = "main";
+      state.currentNode = 0;
+      state.battle = null;
+      state.player.currentHp = playerMaxHp();
+      state.upgradeChoice = null;
+      state.runBuffs = defaultRunBuffs();
+      state.runUpgradeCounts = defaultRunUpgradeCounts();
+      state.stageCardCount = 0;
+      state.reward = {
+        type: "fail",
+        title: "Stage Failed",
+        body: ""
+      };
+      state.runRoundCount = 0;
+    }
+
+    function resetGame() {
+      localStorage.removeItem(STORAGE_KEY);
+      const fresh = loadState();
+      Object.keys(state).forEach(key => delete state[key]);
+      Object.assign(state, fresh);
+      normalizeState();
+    }
+
+    function openHomeChat() {
+      if (state.homeChat.runId !== state.selectedStage) {
+        state.homeChat = { runId: state.selectedStage, unlocked: false, open: true, step: -1, waitingForClose: false, messages: [] };
+      } else {
+      state.homeChat.open = true;
+      }
+      if (state.homeChat.messages.length === 0) {
+        state.homeChat.step = -1;
+        state.homeChat.waitingForClose = false;
+        advanceHomeChat();
+        return;
+      }
+      render();
+    }
+
+    function advanceHomeChat() {
+      if (!state.homeChat.open) {
+        return;
+      }
+      if (state.homeChat.waitingForClose) {
+        state.homeChat.open = false;
+        render();
+        return;
+      }
+      state.homeChat.step += 1;
+      const next = getHomeChatSteps()[state.homeChat.step];
+      if (!next) {
+        state.homeChat.unlocked = true;
+        state.homeChat.waitingForClose = true;
+        render();
+        return;
+      }
+      state.homeChat.messages.push(next);
+      render();
+    }
+
+    function handTotal(cards) {
+      let total = 0;
+      let aces = 0;
+      for (const card of cards) {
+        if (card.rank === "A") {
+          total += 11;
+          aces += 1;
+        } else if (["K", "Q", "J"].includes(card.rank)) {
+          total += 10;
+        } else {
+          total += Number(card.rank);
+        }
+      }
+      while (total > 21 && aces > 0) {
+        total -= 10;
+        aces -= 1;
+      }
+      return total;
+    }
+
+    function displayTotal(cards) {
+      const total = handTotal(cards);
+      return total > 21 ? `${total} BUST` : total;
+    }
+
+    function calculateDamageBreakdown(cards, enemySuit, options = {}) {
+      const counts = {};
+      for (const card of cards) {
+        counts[card.rank] = (counts[card.rank] || 0) + 1;
+      }
+
+      let base = 0;
+      let suitBonus = 0;
+      let comboBonus = 0;
+      let runComboBonus = 0;
+      let runSuitBonus = 0;
+      let runRankBonus = 0;
+      let memoryPhotoBonus = 0;
+      let stageFlowBonus = 0;
+      let pairUpgradeApplied = false;
+      let tripsUpgradeApplied = false;
+      const allIndexes = cards.map((_, index) => index);
+      const suitIndexes = [];
+      const comboIndexes = [];
+      const memoryPhotoIndexes = [];
+      const runBuffs = options.isPlayer ? state.runBuffs : defaultRunBuffs();
+      const runSuitLines = {};
+      const runRankLines = {};
+      const memoryPhotoLines = {};
+      for (const [index, card] of cards.entries()) {
+        const level = options.isPlayer ? (state.deckLevels[cardKey(card.rank, card.suit)] || 1) : 1;
+        const basePerPoint = cardBasePerPoint(level);
+        const rawBaseDamage = cardValue(card, cards) * basePerPoint;
+        base += rawBaseDamage;
+        const memory = options.isPlayer ? getCardMemory(cardKey(card.rank, card.suit)) : null;
+        if (memory) {
+          memoryPhotoBonus += MEMORY_PHOTO_DAMAGE_BONUS;
+          memoryPhotoIndexes.push(index);
+          const characterId = memory.characterId || "memory";
+          const character = getCharacterConfig(characterId);
+          const label = `${character?.name || "Photo"} Memories`;
+          if (!memoryPhotoLines[characterId]) {
+            memoryPhotoLines[characterId] = { label, amount: 0, indices: [] };
+          }
+          memoryPhotoLines[characterId].amount += MEMORY_PHOTO_DAMAGE_BONUS;
+          memoryPhotoLines[characterId].indices.push(index);
+        }
+        if (runBuffs.suit[card.suit]) {
+          const extra = Math.round(rawBaseDamage * runBuffs.suit[card.suit]);
+          runSuitBonus += extra;
+          if (!runSuitLines[card.suit]) {
+            const upgrade = findUpgradeDefinition(item => item.type === "suit" && item.suit === card.suit);
+            runSuitLines[card.suit] = { amount: 0, indices: [], upgradeId: upgrade?.id, upgradeCount: getRunUpgradeCount(upgrade?.id) };
+          }
+          runSuitLines[card.suit].amount += extra;
+          runSuitLines[card.suit].indices.push(index);
+        }
+        if (runBuffs.rank[card.rank]) {
+          const extra = Math.round(rawBaseDamage * runBuffs.rank[card.rank]);
+          runRankBonus += extra;
+          if (!runRankLines[card.rank]) {
+            const upgrade = findUpgradeDefinition(item => item.type === "rank" && item.rank === card.rank);
+            runRankLines[card.rank] = { amount: 0, indices: [], upgradeId: upgrade?.id, upgradeCount: getRunUpgradeCount(upgrade?.id) };
+          }
+          runRankLines[card.rank].amount += extra;
+          runRankLines[card.rank].indices.push(index);
+        }
+        const comboBaseDamage = Math.round(rawBaseDamage);
+        if (card.suit === enemySuit) {
+          suitIndexes.push(index);
+          suitBonus += comboBaseDamage;
+        }
+        const count = counts[card.rank];
+        if (count >= 2) {
+          comboIndexes.push(index);
+          const baseComboExtra = Math.round(comboBaseDamage * (count - 1));
+          let comboExtra = baseComboExtra;
+          if (count === 2 && runBuffs.pair > 0) {
+            const upgradeExtra = Math.round(baseComboExtra * runBuffs.pair);
+            comboExtra += upgradeExtra;
+            runComboBonus += upgradeExtra;
+            pairUpgradeApplied = true;
+          }
+          if (count >= 3 && runBuffs.trips > 0) {
+            const upgradeExtra = Math.round(baseComboExtra * runBuffs.trips);
+            comboExtra += upgradeExtra;
+            runComboBonus += upgradeExtra;
+            tripsUpgradeApplied = true;
+          }
+          comboBonus += comboExtra;
+        }
+      }
+
+      if (options.isPlayer && runBuffs.stageCards > 0 && cards.length > 0) {
+        stageFlowBonus = cards.reduce((sum, card) => {
+          const level = options.isPlayer ? (state.deckLevels[cardKey(card.rank, card.suit)] || 1) : 1;
+          const rawBaseDamage = cardValue(card, cards) * cardBasePerPoint(level);
+          return sum + Math.round(rawBaseDamage * runBuffs.stageCards);
+        }, 0);
+      }
+      const comboUpgradeParts = [];
+      let runComboUpgradeCount = 0;
+      if (pairUpgradeApplied) {
+        const upgrade = findUpgradeDefinition(item => item.type === "pair");
+        comboUpgradeParts.push(upgrade?.title || "Upgrade pair");
+        runComboUpgradeCount += getRunUpgradeCount(upgrade?.id);
+      }
+      if (tripsUpgradeApplied) {
+        const upgrade = findUpgradeDefinition(item => item.type === "trips");
+        comboUpgradeParts.push(upgrade?.title || "Upgrade trips");
+        runComboUpgradeCount += getRunUpgradeCount(upgrade?.id);
+      }
+      const comboUpgradeLabel = comboUpgradeParts.join(" / ") || "Upgrade combo";
+      const stageFlowUpgrade = findUpgradeDefinition(item => item.type === "stageCards");
+      const blackjackUpgrade = findUpgradeDefinition(item => item.type === "blackjack");
+      const stageFlowLabel = stageFlowUpgrade?.title || "Upgrade stage";
+      const blackjackUpgradeLabel = blackjackUpgrade?.title || "Upgrade blackjack";
+
+      let total = base + memoryPhotoBonus + runSuitBonus + runRankBonus + suitBonus + comboBonus + runComboBonus + stageFlowBonus;
+      let blackjackBonus = 0;
+      let runBlackjackBonus = 0;
+      if (handTotal(cards) === 21) {
+        blackjackBonus = Math.round(total);
+        if (runBuffs.blackjack > 0) {
+          runBlackjackBonus = Math.round(blackjackBonus * runBuffs.blackjack);
+        }
+        total += blackjackBonus + runBlackjackBonus;
+      }
+      return {
+        total,
+        lines: [
+          { key: "base", label: "Base", amount: base, indices: allIndexes },
+          ...Object.values(memoryPhotoLines).map(data => ({
+            key: "memoryPhoto",
+            label: data.label,
+            amount: data.amount,
+            indices: uniqueIndexes(data.indices)
+          })),
+          ...Object.entries(runSuitLines).map(([suit, data]) => ({
+            key: "runSuit",
+            label: findUpgradeDefinition(item => item.type === "suit" && item.suit === suit)?.title || SUITS[suit].name,
+            amount: data.amount,
+            indices: uniqueIndexes(data.indices),
+            upgradeCount: data.upgradeCount
+          })),
+          ...Object.entries(runRankLines).map(([rank, data]) => ({
+            key: "runRank",
+            label: findUpgradeDefinition(item => item.type === "rank" && item.rank === rank)?.title || rank,
+            amount: data.amount,
+            indices: uniqueIndexes(data.indices),
+            upgradeCount: data.upgradeCount
+          })),
+          { key: "suit", label: `Suit ${SUITS[enemySuit].icon}`, amount: suitBonus, indices: uniqueIndexes(suitIndexes) },
+          { key: "combo", label: "Pairs / Trips", amount: comboBonus - runComboBonus, indices: uniqueIndexes(comboIndexes) },
+          { key: "runCombo", label: comboUpgradeLabel, amount: runComboBonus, indices: uniqueIndexes(comboIndexes), upgradeCount: runComboUpgradeCount },
+          { key: "stageFlow", label: stageFlowLabel, amount: stageFlowBonus, indices: allIndexes, upgradeCount: getRunUpgradeCount(stageFlowUpgrade?.id) },
+          { key: "blackjack", label: "Blackjack", amount: blackjackBonus, indices: handTotal(cards) === 21 ? allIndexes : [] },
+          { key: "runBlackjack", label: blackjackUpgradeLabel, amount: runBlackjackBonus, indices: handTotal(cards) === 21 ? allIndexes : [], upgradeCount: getRunUpgradeCount(blackjackUpgrade?.id) }
+        ].filter(line => line.amount > 0)
+      };
+    }
+
+    function buildBustDamage() {
+      return {
+        total: 0,
+        originalTotal: 0,
+        lines: [{ key: "bust", label: "BUST", amount: 0, indices: [] }]
+      };
+    }
+
+    function buildRoundSummary(playerDamage, enemyDamage, winnerClass) {
+      const winnerLabel = winnerClass === "draw" ? "Remis rundy" : winnerClass === "player" ? "Player wins" : "Enemy wins";
+      const steps = buildSummarySteps(playerDamage.lines, enemyDamage.lines, winnerClass);
+      return {
+        winnerClass,
+        steps,
+        currentStepIndex: 0,
+        appliedDamage: false,
+        player: buildSideSummaryState("Player dmg", playerDamage, winnerClass === "player" ? winnerLabel : winnerClass === "draw" ? "Remis" : "Liczenie", winnerClass),
+        enemy: buildSideSummaryState("Enemy dmg", enemyDamage, winnerClass === "enemy" ? winnerLabel : winnerClass === "draw" ? "Remis" : "Liczenie", winnerClass)
+      };
+    }
+
+    function determineRoundWinner(playerTotal, enemyTotal, playerBust, enemyBust) {
+      if (playerBust && enemyBust) {
+        return { winnerClass: "draw" };
+      }
+      if (playerBust) {
+        return { winnerClass: "enemy" };
+      }
+      if (enemyBust) {
+        return { winnerClass: "player" };
+      }
+      if (playerTotal === enemyTotal) {
+        return { winnerClass: "draw" };
+      }
+      return { winnerClass: playerTotal > enemyTotal ? "player" : "enemy" };
+    }
+
+    function applyWinnerBonus(playerDamage, enemyDamage, winnerClass) {
+      if (winnerClass === "player") {
+        const baseLine = playerDamage.lines.find(line => line.label === "Base");
+        const bonus = Math.round((baseLine?.amount || 0) * 0.5);
+        playerDamage.lines.push({ key: "roundWin", label: "Round win", amount: bonus, indices: [], target: "name" });
+        playerDamage.total += bonus;
+      }
+      if (winnerClass === "enemy") {
+        const baseLine = enemyDamage.lines.find(line => line.label === "Base");
+        const bonus = Math.round((baseLine?.amount || 0) * 0.5);
+        enemyDamage.lines.push({ key: "roundWin", label: "Round win", amount: bonus, indices: [], target: "name" });
+        enemyDamage.total += bonus;
+      }
+    }
+
+    function applyLoserPenalty(playerDamage, enemyDamage, winnerClass) {
+      playerDamage.originalTotal = playerDamage.total;
+      enemyDamage.originalTotal = enemyDamage.total;
+      if (winnerClass === "player") {
+        enemyDamage.total = Math.round(enemyDamage.total * 0.5);
+      }
+      if (winnerClass === "enemy") {
+        playerDamage.total = Math.round(playerDamage.total * 0.5);
+      }
+    }
+
+    function cardValue(card, cards) {
+      if (card.rank === "A") {
+        const totalHigh = cards.reduce((sum, current) => {
+          if (current.rank === "A") {
+            return sum + 11;
+          }
+          if (["K", "Q", "J"].includes(current.rank)) {
+            return sum + 10;
+          }
+          return sum + Number(current.rank);
+        }, 0);
+        return totalHigh > 21 ? 1 : 11;
+      }
+      if (["K", "Q", "J"].includes(card.rank)) {
+        return 10;
+      }
+      return Number(card.rank);
+    }
+
+    function cardPreviewValue(rank) {
+      if (rank === "A") {
+        return 11;
+      }
+      if (["K", "Q", "J"].includes(rank)) {
+        return 10;
+      }
+      return Number(rank);
+    }
+
+    function cardPreviewDamage(rank, suit, options = {}) {
+      const key = cardKey(rank, suit);
+      const level = state.deckLevels[key] || 1;
+      const includeMemory = options.includeMemory !== false;
+      const memoryBonus = includeMemory && getCardMemory(key) ? MEMORY_PHOTO_DAMAGE_BONUS : 0;
+      return cardPreviewValue(rank) * cardBasePerPoint(level) + memoryBonus;
+    }
+
+    function hpPct(value, max) {
+      return Math.max(0, Math.min(100, (value / max) * 100));
+    }
+
+    function getAdvanceButtonLabel() {
+      const pending = state.pendingRoundResult;
+      if (!pending) {
+        return "Next Round";
+      }
+      if (pending.type === "finish-battle") {
+        if (pending.playerAfter <= 0) {
+          return "Stage Failed";
+        }
+        if (pending.enemyAfter <= 0) {
+          return "Next Stage";
+        }
+      }
+      return "Next Round";
+    }
+
+    function playerMaxHp() {
+      return PLAYER_BASE_HP + (state.player.level - 1) * PLAYER_HP_PER_LEVEL;
+    }
+
+    function cardLevelData(level) {
+      return CARD_LEVELS[level] || CARD_LEVELS[1];
+    }
+
+    function cardBasePerPoint(level) {
+      return cardLevelData(level).dmgPerPoint;
+    }
+
+    function copiesNeededForNextLevel(level) {
+      return cardLevelData(level).copiesNeeded;
+    }
+
+    function upgradeCostForLevel(level) {
+      return cardLevelData(level).upgradeCost;
+    }
+
+    function progressRatio(level, copies) {
+      const needed = copiesNeededForNextLevel(level);
+      if (!needed) {
+        return 100;
+      }
+      return Math.min(100, Math.round((copies / needed) * 100));
+    }
+
+    function cardKey(rank, suit) {
+      return `${rank}_${suit}`;
+    }
+
+    function getMapLayout(runId) {
+      return MAP_LAYOUTS[runId] || MAP_LAYOUTS[1];
+    }
+
+    function rankLabel(rank) {
+      return ["A", "K", "Q", "J"].includes(rank) ? rank : `${rank}`;
+    }
+
+    function canUpgradeCard(key) {
+      const level = state.deckLevels[key] || 1;
+      const needed = copiesNeededForNextLevel(level);
+      if (!needed) {
+        return false;
+      }
+      return (state.deckCopies[key] || 0) >= needed;
+    }
+
+    function hasUpgradeableCardsInSuit(suitKey) {
+      return RANKS.some(rank => canUpgradeCard(cardKey(rank, suitKey)));
+    }
+
+    function hasUpgradeableCards() {
+      return Object.keys(SUITS).some(suitKey => hasUpgradeableCardsInSuit(suitKey));
+    }
+
+    function canAffordCardUpgrade(key) {
+      const level = state.deckLevels[key] || 1;
+      const cost = upgradeCostForLevel(level);
+      if (!cost) {
+        return false;
+      }
+      return state.player.soft >= cost;
+    }
+
+    function upgradeFocusedCard() {
+      const key = state.deckFocus;
+      if (!key || !canUpgradeCard(key) || !canAffordCardUpgrade(key)) {
+        return;
+      }
+      const level = state.deckLevels[key] || 1;
+      const cost = upgradeCostForLevel(level);
+      const needed = copiesNeededForNextLevel(level);
+      state.player.soft -= cost;
+      state.deckCopies[key] -= needed;
+      state.deckLevels[key] = Math.min(3, level + 1);
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function createBattlePack(enemySuit) {
+      const allCards = [];
+      for (const suit of Object.keys(SUITS)) {
+        for (const rank of RANKS) {
+          allCards.push({ rank, suit });
+        }
+      }
+      const suitPool = allCards.filter(card => card.suit === enemySuit);
+      const firstBase = suitPool[randomInt(0, suitPool.length - 1)];
+      const first = { ...firstBase, amount: randomInt(2, 4) };
+      const remaining = allCards.filter(card => cardKey(card.rank, card.suit) !== cardKey(first.rank, first.suit));
+      const secondBase = remaining[randomInt(0, remaining.length - 1)];
+      const second = { ...secondBase, amount: randomInt(2, 4) };
+      return [first, second];
+    }
+
+    function grantBattlePack(cards) {
+      for (const card of cards) {
+        const key = cardKey(card.rank, card.suit);
+        const copiesBefore = state.deckCopies[key] || 0;
+        const copiesAfter = copiesBefore + card.amount;
+        card.copiesBefore = copiesBefore;
+        card.copiesAfter = copiesAfter;
+        state.deckCopies[key] = copiesAfter;
+      }
+    }
+
+    function findUpgradeDefinition(predicate) {
+      return RUN_UPGRADES.find(predicate);
+    }
+
+    function pushLog(message) {
+      state.logs = [message, ...state.logs].slice(0, 6);
+    }
+
+    function isRedSuit(suit) {
+      return suit === "hearts" || suit === "diamonds";
+    }
+
+    function buildDoubleBustSummary() {
+      return {
+        winnerClass: "draw",
+        steps: [],
+        currentStepIndex: 0,
+        appliedDamage: true,
+        player: {
+          title: "Player dmg",
+          winnerClass: "draw",
+          winnerLabel: "Double bust",
+          lines: [{ key: "bust", label: "BUST", amount: 0, indices: [] }],
+          visibleKeys: ["bust"],
+          currentStep: "bust",
+          totalShown: 0,
+          readyForNext: true,
+          originalTotal: 0,
+          reducedTotal: 0,
+          reducedTotalVisible: false
+        },
+        enemy: {
+          title: "Enemy dmg",
+          winnerClass: "draw",
+          winnerLabel: "Double bust",
+          lines: [{ key: "bust", label: "BUST", amount: 0, indices: [] }],
+          visibleKeys: ["bust"],
+          currentStep: "bust",
+          totalShown: 0,
+          readyForNext: true,
+          originalTotal: 0,
+          reducedTotal: 0,
+          reducedTotalVisible: false
+        }
+      };
+    }
+
+    function buildSideSummaryState(title, damage, label, winnerClass) {
+      return {
+        title,
+        winnerClass,
+        winnerLabel: label,
+        lines: damage.lines,
+        visibleKeys: [],
+        currentStep: null,
+        totalShown: 0,
+        readyForNext: false,
+        originalTotal: damage.originalTotal ?? damage.total,
+        reducedTotal: damage.total,
+        reducedTotalVisible: false
+      };
+    }
+
+    function buildSummarySteps(playerLines, enemyLines, winnerClass) {
+      const ordered = ["base", "memoryPhoto", "runSuit", "runRank", "suit", "combo", "runCombo", "stageFlow", "blackjack", "runBlackjack", "roundWin"];
+      return ordered.filter(step => step === "roundWin" ? winnerClass !== "draw" : playerLines.some(line => line.key === step) || enemyLines.some(line => line.key === step));
+    }
+
+    function runRoundSummarySequence(enemyAfter, playerAfter) {
+      const summary = state.roundSummary;
+      if (!summary) {
+        return;
+      }
+      if (summary.steps.length === 0) {
+        finishRoundDamage(enemyAfter, playerAfter);
+        return;
+      }
+      summary.currentStepIndex = 0;
+      applySummaryStep();
+      render();
+      scheduleNextSummaryStep(enemyAfter, playerAfter);
+    }
+
+    function scheduleNextSummaryStep(enemyAfter, playerAfter) {
+      const summary = state.roundSummary;
+      if (!summary) {
+        return;
+      }
+      if (summary.currentStepIndex >= summary.steps.length - 1) {
+        setTimeout(() => {
+          finishRoundDamage(enemyAfter, playerAfter);
+        }, 950);
+        return;
+      }
+      setTimeout(() => {
+        const activeSummary = state.roundSummary;
+        if (!activeSummary) {
+          return;
+        }
+        activeSummary.currentStepIndex += 1;
+        applySummaryStep();
+        render();
+        scheduleNextSummaryStep(enemyAfter, playerAfter);
+      }, 950);
+    }
+
+    function applySummaryStep() {
+      const summary = state.roundSummary;
+      const step = summary.steps[summary.currentStepIndex];
+      for (const side of [summary.player, summary.enemy]) {
+        side.currentStep = step;
+        if (!side.visibleKeys.includes(step) && side.lines.some(line => line.key === step)) {
+          side.visibleKeys.push(step);
+        }
+        side.totalShown = side.lines
+          .filter(line => side.visibleKeys.includes(line.key))
+          .reduce((sum, line) => sum + line.amount, 0);
+      }
+    }
+
+    function finishRoundDamage(enemyAfter, playerAfter) {
+      const summary = state.roundSummary;
+      if (!summary || summary.appliedDamage) {
+        return;
+      }
+      const battle = state.battle;
+      const pending = state.pendingRoundResult;
+      if (!pending || pending.type === "draw-reset") {
+        summary.player.readyForNext = true;
+        summary.enemy.readyForNext = true;
+        render();
+        return;
+      }
+      summary.appliedDamage = true;
+      if (summary.winnerClass === "player") {
+        summary.enemy.reducedTotalVisible = summary.enemy.originalTotal !== summary.enemy.reducedTotal;
+      }
+      if (summary.winnerClass === "enemy") {
+        summary.player.reducedTotalVisible = summary.player.originalTotal !== summary.player.reducedTotal;
+      }
+      battle.enemy.recentDamage = pending.enemyDamage;
+      battle.player.recentDamage = pending.playerDamage;
+      battle.enemy.hp = pending.enemyAfter;
+      battle.player.hp = pending.playerAfter;
+      state.player.currentHp = pending.playerAfter;
+      animateHpBars(pending.enemyAfter, pending.playerAfter, () => {
+        summary.player.readyForNext = true;
+        summary.enemy.readyForNext = true;
+        render();
+      });
+    }
+
+    function animateHpBars(targetEnemyHp, targetPlayerHp, onComplete) {
+      if (!state.battle) {
+        if (onComplete) {
+          onComplete();
+        }
+        return;
+      }
+      cancelAnimationFrame(hpAnimationFrame);
+      const battle = state.battle;
+      const startEnemyHp = battle.enemy.displayHp;
+      const startPlayerHp = battle.player.displayHp;
+      const duration = 760;
+      const startedAt = performance.now();
+      isHpAnimating = true;
+
+      function step(now) {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        battle.enemy.displayHp = Math.round(startEnemyHp + (targetEnemyHp - startEnemyHp) * eased);
+        battle.player.displayHp = Math.round(startPlayerHp + (targetPlayerHp - startPlayerHp) * eased);
+        render();
+        if (progress < 1) {
+          hpAnimationFrame = requestAnimationFrame(step);
+          return;
+        }
+        battle.enemy.displayHp = targetEnemyHp;
+        battle.player.displayHp = targetPlayerHp;
+        isHpAnimating = false;
+        render();
+        if (onComplete) {
+          onComplete();
+        }
+      }
+
+      hpAnimationFrame = requestAnimationFrame(step);
+    }
+
+    function highlightedIndexes(sideSummary, step) {
+      if (!sideSummary || !step) {
+        return [];
+      }
+      const line = sideSummary.lines.find(item => item.key === step);
+      return line?.indices || [];
+    }
+
+    function shouldFlashName(summary, sideName, step) {
+      if (!summary || step !== "roundWin" || summary.winnerClass !== sideName) {
+        return false;
+      }
+      return true;
+    }
+
+    function uniqueIndexes(indexes) {
+      return [...new Set(indexes)];
+    }
+  </script>
+</body>
+</html>
+
